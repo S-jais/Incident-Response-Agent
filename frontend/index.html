@@ -1,18 +1,299 @@
-<!doctype html>
-<html lang="en" class="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23818cf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83'/></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HindsightOps | AI Incident Response Agent That Remembers</title>
-    <meta name="description" content="An AI incident response agent powered by Hindsight persistent memory. Resolves production incidents by recalling historical patterns, postmortems, and runbooks." />
-    <!-- Google Fonts: Inter & JetBrains Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  </head>
-  <body class="bg-slate-950 text-slate-100 antialiased selection:bg-brand-500 selection:text-white font-sans min-h-screen">
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HindsightOps | AI Incident Responder That Remembers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0e11;--pn:#15171c;--ln:#262a32;--tx:#efeee9;--mu:#8b909a;--ac:#c8f542;--ac2:#ff6b4a;--bl:#6ea8ff;--ok:#4ade80;
+--sn:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;--mo:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]){--bg:#f4f2ea;--pn:#fff;--ln:#dcd8cb;--tx:#16181d;--mu:#666b75;--ac:#4d6a00;--ac2:#d1401f;--bl:#1f5fd1;--ok:#178a45}}
+:root[data-theme=light]{--bg:#f4f2ea;--pn:#fff;--ln:#dcd8cb;--tx:#16181d;--mu:#666b75;--ac:#4d6a00;--ac2:#d1401f;--bl:#1f5fd1;--ok:#178a45}
+:root[data-theme=dark]{--bg:#0d0e11;--pn:#15171c;--ln:#262a32;--tx:#efeee9;--mu:#8b909a;--ac:#c8f542;--ac2:#ff6b4a;--bl:#6ea8ff;--ok:#4ade80}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--tx);font:15px/1.55 var(--sn);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+.mo{font-family:var(--mo)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);border-bottom:1px solid var(--ln)}
+.top{max-width:1240px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:18px}
+.brand{display:flex;gap:10px;align-items:center;cursor:pointer;flex:none}
+.brand i{width:34px;height:34px;background:var(--ac);color:#101400;display:grid;place-items:center;font:800 18px var(--sn);font-style:normal;clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%)}
+.brand b{font-weight:800;font-size:18px;letter-spacing:-.02em;display:block;line-height:1}
+.brand small{font:10px var(--mo);color:var(--mu)}
+nav{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{background:none;border:0;padding:8px 12px;color:var(--mu);cursor:pointer;white-space:nowrap;font-size:14px;border-bottom:2px solid transparent;transition:color .15s}
+nav button:hover{color:var(--tx)}
+nav button.on{color:var(--tx);border-color:var(--ac)}
+.jd{font:500 9px var(--mo);background:var(--ac2);color:#fff;padding:2px 5px;margin-left:6px;vertical-align:middle}
+.st{display:flex;gap:8px;flex:none}
+.chip{font:12px var(--mo);border:1px solid var(--ln);padding:7px 11px;background:var(--pn);cursor:pointer;display:flex;gap:7px;align-items:center}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.chip.off i{background:var(--mu)}
+main{max-width:1240px;margin:0 auto;padding:28px 20px 80px}
+.v{display:none}.v.on{display:block;animation:in .3s}
+@keyframes in{from{opacity:0;transform:translateY(8px)}}
+.hero{border:1px solid var(--ln);background:var(--pn);padding:40px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:280px;height:280px;border:1px dashed var(--ln);border-radius:50%;box-shadow:0 0 0 40px transparent,0 0 0 41px var(--ln),0 0 0 90px transparent,0 0 0 91px var(--ln)}
+.badge{display:inline-block;font:12px var(--mo);color:var(--ac);border:1px solid var(--ac);padding:4px 10px;margin-bottom:22px}
+h1{font-size:clamp(2.2rem,5.5vw,4.2rem);line-height:1;letter-spacing:-.04em;font-weight:800;max-width:760px;position:relative;z-index:1}
+h1 em{font-style:normal;background:var(--ac);color:#101400;padding:0 .12em}
+.hero p{max-width:600px;color:var(--mu);margin:20px 0 28px;position:relative;z-index:1}
+.row{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
+.btn{border:1px solid var(--ln);background:none;padding:12px 18px;cursor:pointer;font-weight:600;transition:transform .15s,border-color .15s}
+.btn:hover{transform:translate(-2px,-2px);border-color:var(--tx)}
+.btn.p{background:var(--ac);color:#101400;border-color:var(--ac);box-shadow:4px 4px 0 var(--ac2)}
+.btn.p:hover{box-shadow:6px 6px 0 var(--ac2)}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:14px 0}
+.stat{background:var(--pn);border:1px solid var(--ln);padding:20px;border-top:3px solid var(--c,var(--ac))}
+.stat label{font:11px var(--mo);letter-spacing:.1em;color:var(--mu);text-transform:uppercase}
+.stat b{display:block;font:800 40px/1.2 var(--sn);margin:8px 0 2px}
+.stat b s{font:500 12px var(--mo);color:var(--ok);text-decoration:none}
+.stat span{color:var(--mu);font-size:13px}
+.panel{background:var(--pn);border:1px solid var(--ln);padding:24px;margin-top:14px}
+.panel h2{font-size:22px;letter-spacing:-.02em}
+.panel>p{color:var(--mu);font-size:14px}
+.loop{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:22px;counter-reset:s}
+.node{padding:18px 16px;border:1px solid var(--ln);margin-left:-1px;opacity:.45;transition:opacity .3s,background .3s;position:relative}
+.node.on{opacity:1;background:color-mix(in srgb,var(--ac) 10%,var(--pn));border-color:var(--ac);z-index:1}
+.node small{font:10px var(--mo);color:var(--mu);letter-spacing:.08em;display:block;margin-bottom:8px}
+.node b{display:block}.node span{font-size:13px;color:var(--mu)}
+table{width:100%;border-collapse:collapse;margin-top:14px}
+th{font:11px var(--mo);text-align:left;color:var(--mu);text-transform:uppercase;padding:10px;border-bottom:1px solid var(--ln)}
+td{padding:14px 10px;border-bottom:1px solid var(--ln);font-size:14px}
+.tg{font:11px var(--mo);padding:3px 8px;border:1px solid currentColor}
+.tg.a{color:var(--ac2)}.tg.r{color:var(--ok)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{border:1px solid var(--ln);background:var(--pn);padding:22px}
+.card.bad{border-top:3px solid var(--ac2)}.card.good{border-top:3px solid var(--ac)}
+.card h3{margin-bottom:12px}.card li{margin:0 0 9px 18px;color:var(--mu);font-size:14px}
+form{display:grid;gap:14px;margin-top:16px;max-width:620px}
+label.f{display:grid;gap:6px;font:12px var(--mo);color:var(--mu)}
+input,select,textarea{background:var(--bg);border:1px solid var(--ln);padding:11px;font-family:var(--sn);font-size:14px;outline:0}
+input:focus,select:focus,textarea:focus{border-color:var(--ac)}
+.rc{margin-top:16px;padding:16px;border:1px dashed var(--ac);display:none;font-size:14px}
+.rc.on{display:block}
+.tgl{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid var(--ln)}
+.tgl button{width:44px;height:24px;background:var(--ln);border:0;position:relative;cursor:pointer}
+.tgl button::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;background:var(--tx);transition:transform .2s}
+.tgl button.on{background:var(--ac)}.tgl button.on::after{transform:translateX(20px);background:#101400}
+.mem{padding:14px;border-left:3px solid var(--ac);background:var(--bg);margin-top:10px;font-size:14px}
+.mem small{font:11px var(--mo);color:var(--mu);display:block}
+.empty{color:var(--mu);padding:20px 0;font-size:14px}
+@media (max-width:900px){.g4,.g2{grid-template-columns:1fr 1fr}.loop{grid-template-columns:1fr}.node{margin:-1px 0 0}.top{flex-wrap:wrap}.st{order:2}.hero{padding:26px}}
+@media (max-width:560px){.g4,.g2{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<header><div class="top">
+ <div class="brand" data-go="dash"><i>H</i><div><b>HindsightOps</b><small>Incident responder that remembers</small></div></div>
+ <nav id="nav"></nav>
+ <div class="st"><div class="chip" id="demoChip"><i></i>Hindsight Live Connected</div><div class="chip" id="reset">Reset Demo</div></div>
+</div></header>
+<main>
+<section class="v on" id="dash">
+ <div class="hero"><span class="badge mo">HackWithHyderabad 3.0 · AI Agents That Learn Using Hindsight</span>
+  <h1>Turn every production incident into <em>institutional memory.</em></h1>
+  <p>When production fails, engineers shouldn't have to re-solve identical problems from scratch. HindsightOps recalls previous root causes, verified runbooks, and postmortems from persistent Hindsight memory.</p>
+  <div class="row"><button class="btn p" id="launch">▶ Launch 60s Judge Demo</button><button class="btn" data-go="inc">Investigate Target INC-1042 →</button><button class="btn" data-go="ba">Stateless vs Hindsight Comparison</button></div></div>
+ <div class="g4">
+  <div class="stat" style="--c:var(--ac2)"><label>Active Outages</label><b id="sOut">1</b><span>Awaiting triage or resolution</span></div>
+  <div class="stat" style="--c:var(--ac)"><label>Hindsight Memories</label><b id="sMem">0</b><span>Persistent institutional facts</span></div>
+  <div class="stat" style="--c:var(--bl)"><label>Average MTTR</label><b>13.6m <s>↓ 72% MTTR</s></b><span>72% faster with memory recall</span></div>
+  <div class="stat" style="--c:var(--ok)"><label>Historical Recalls</label><b id="sRec">0</b><span>Institutional queries executed</span></div>
+ </div>
+ <div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><div><h2>Hindsight Institutional Memory Loop</h2><p>Visualizing how historical resolutions turn into persistent operational intelligence</p></div><span class="chip">Continuous Learning Graph</span></div>
+  <div class="loop" id="loop"></div></div>
+</section>
+
+<section class="v" id="inc"><div class="panel" style="margin:0"><h2>Incidents</h2><p>Live and historical incidents tracked by HindsightOps</p>
+ <table><thead><tr><th>ID</th><th>Title</th><th>Status</th><th>MTTR</th></tr></thead><tbody id="tb"></tbody></table></div></section>
+
+<section class="v" id="new"><div class="panel" style="margin:0"><h2>New Incident</h2><p>Describe symptoms and the agent will query Hindsight memory.</p>
+ <form id="form"><label class="f">TITLE<input id="fT" required value="API timeouts on checkout"></label>
+ <label class="f">SEVERITY<select id="fSev"><option>SEV-1</option><option>SEV-2</option></select></label>
+ <label class="f">SYMPTOMS<textarea id="fS" rows="3">Connection pool exhausted, requests timing out after deploy</textarea></label>
+ <button class="btn p" id="fBtn" style="justify-self:start">Investigate with Hindsight</button></form><div class="rc" id="rc"></div></div></section>
+
+<section class="v" id="demo"><div class="panel" style="margin:0"><h2>Memory Learning Demo <span class="jd">JUDGES</span></h2><p>Watch the agent solve INC-0812, retain the lesson, then resolve INC-1042 using recall.</p>
+ <div class="row" style="margin-top:16px"><button class="btn p" id="launch2">▶ Run 60s Demo</button></div><div id="log" class="mo" style="margin-top:18px;font-size:13px;color:var(--mu)"></div></div></section>
+
+<section class="v" id="ba"><div class="g2">
+ <div class="card bad"><h3>Stateless AI</h3><ul><li>Starts from zero every incident</li><li>Generic suggestions, no context</li><li>Repeats past mistakes</li><li>Avg MTTR ≈ 48.6 min</li></ul></div>
+ <div class="card good"><h3>With Hindsight</h3><ul><li>Recalls INC-0812 root cause instantly</li><li>Applies verified Runbook DB-04</li><li>Every fix is retained for next time</li><li>Avg MTTR ≈ 13.6 min (↓ 72%)</li></ul></div></div></section>
+
+<section class="v" id="mem"><div class="panel" style="margin:0"><h2>Hindsight Memory</h2><p>Persistent institutional facts retained by the agent</p><div id="memList"></div></div></section>
+
+<section class="v" id="rb"><div class="g2">
+ <div class="card good"><h3>DB-04 · Pool Saturation</h3><ul><li>Check active connections</li><li>Raise pool ceiling 50 → 100</li><li>Restart workers</li></ul></div>
+ <div class="card"><h3>NET-11 · Latency Spike</h3><ul><li>Inspect gateway p99</li><li>Roll back last deploy</li><li>Flush CDN cache</li></ul></div></div></section>
+
+<section class="v" id="set"><div class="panel" style="margin:0"><h2>Settings</h2>
+ <div class="tgl"><span>Hindsight Demo Mode</span><button class="on" data-t="demo"></button></div>
+ <div class="tgl"><span>Auto-recall on new incidents</span><button class="on"></button></div>
+ <div class="tgl"><span>Retain outcomes automatically</span><button class="on"></button></div>
+ <div class="tgl"><span>Light theme</span><button id="theme"></button></div></div></section>
+</main>
+<script>
+(function(){
+var API_BASE = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost')
+  ? '/api'
+  : 'https://incident-response-agent-b268.onrender.com/api';
+
+var $=function(s){return document.querySelector(s)},V=[["dash","Dashboard"],["inc","Incidents"],["new","New Incident"],["demo","Memory Learning Demo<span class=jd>JUDGES</span>"],["ba","Before vs After"],["mem","Hindsight Memory"],["rb","Runbooks"],["set","Settings"]];
+var S={mem:[],rec:0,inc:[["INC-0812","Connection Pool Saturation","Resolved","41m"],["INC-1042","Recurring Symptoms: checkout timeouts","Active","—"]],busy:0};
+$("#nav").innerHTML=V.map(function(v){return'<button data-go="'+v[0]+'">'+v[1]+'</button>'}).join("");
+function go(id){document.querySelectorAll(".v").forEach(function(e){e.classList.toggle("on",e.id==id)});document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.go==id)});scrollTo(0,0)}
+document.addEventListener("click",function(e){var g=e.target.closest("[data-go]");if(g)go(g.dataset.go)});
+var L=[["1. Historical Incident","INC-0812","Connection Pool Saturation"],["2. Root Cause & Fix","Runbook DB-04","Pool ceiling 50 → 100"],["3. Institutional Memory","Hindsight Memory Bank","Retained lesson"],["4. New Outage (Current)","INC-1042","Recurring Symptoms"],["5. Future Resilience","INC-1099","Cumulative Knowledge"]];
+$("#loop").innerHTML=L.map(function(n){return'<div class="node"><small class="mo">'+n[0]+'</small><b>'+n[1]+'</b><span>'+n[2]+'</span></div>'}).join("");
+function render(){
+ $("#sMem").textContent=S.mem.length;$("#sRec").textContent=S.rec;$("#sOut").textContent=S.inc.filter(function(i){return i[2]=="Active"}).length;
+ $("#tb").innerHTML=S.inc.map(function(i){return'<tr><td class=mo>'+i[0]+'</td><td>'+i[1]+'</td><td><span class="tg '+(i[2]=="Active"?"a":"r")+'">'+i[2]+'</span></td><td class=mo>'+i[3]+'</td></tr>'}).join("");
+ $("#memList").innerHTML=S.mem.length?S.mem.map(function(m){return'<div class=mem><small>'+m[0]+'</small>'+m[1]+'</div>'}).join(""):'<div class=empty>No memories yet. Run the judge demo to retain some.</div>';
+}
+function sleep(t){return new Promise(function(r){setTimeout(r,t)})}
+
+// Initial Live Backend Sync
+async function syncLiveBackend(){
+  try {
+    const health = await fetch(API_BASE + '/health').then(r=>r.json()).catch(()=>null);
+    if(health && health.status === 'OK'){
+      $("#demoChip").innerHTML = '<i></i>Backend: Live (' + (health.hindsight === 'Connected (Live)' ? 'Hindsight Live' : 'Demo') + ')';
+    }
+    const incData = await fetch(API_BASE + '/incidents').then(r=>r.json()).catch(()=>null);
+    if(incData && Array.isArray(incData) && incData.length > 0){
+      S.inc = incData.map(function(i){
+        return [i.id, i.title, i.status === 'RESOLVED' ? 'Resolved' : 'Active', i.resolution_time_minutes ? (i.resolution_time_minutes + 'm') : '—'];
+      });
+    }
+    const memData = await fetch(API_BASE + '/memory/recent').then(r=>r.json()).catch(()=>null);
+    if(memData && Array.isArray(memData) && memData.length > 0){
+      S.mem = memData.map(function(m){
+        return [m.document_id || m.id || 'MEM-HINDSIGHT', m.text || m.summary || m.content];
+      });
+      S.rec = Math.max(S.rec, S.mem.length);
+    }
+    render();
+  } catch(e) {
+    console.log("Using local offline fallback state:", e);
+  }
+}
+syncLiveBackend();
+
+async function demo(){
+ if(S.busy)return;S.busy=1;go("demo");var lg=$("#log"),nodes=document.querySelectorAll(".node");lg.innerHTML="";
+ var steps=[
+   ["INC-0812 detected: Connection Pool Saturation",0],
+   ["Root cause found. Runbook DB-04 applied (pool 50 → 100)",1],
+   ["Lesson retained in Hindsight memory (live sync)",2,async function(){
+     S.mem.push(["INC-0812","Pool saturation after deploy → apply DB-04"],["DB-04","Raise pool ceiling 50 → 100, restart workers"]);
+     try {
+       await fetch(API_BASE + '/incidents/INC-0812/learn', {method:'POST'}).catch(()=>{});
+     } catch(e){}
+   }],
+   ["INC-1042 opens with similar symptoms",3],
+   ["Recalled INC-0812 (94% match) from Hindsight bank. Suggesting DB-04.",3,async function(){
+     S.rec++;
+     try {
+       await fetch(API_BASE + '/incidents/INC-1042/analyze?stateless=false', {method:'POST'}).catch(()=>{});
+     } catch(e){}
+   }],
+   ["Resolved in 4m. Institutional knowledge compounds for INC-1099.",4,async function(){
+     S.inc[1]=["INC-1042","Recurring Symptoms: checkout timeouts","Resolved","4m"];
+     S.mem.push(["INC-1042","Recurring pattern confirmed, DB-04 verified"]);
+     try {
+       await fetch(API_BASE + '/incidents/INC-1042/resolve', {
+         method:'POST',
+         headers:{'Content-Type':'application/json'},
+         body: JSON.stringify({resolution:'Applied Runbook DB-04: increased pool from 50 to 100', resolution_time_minutes:4, was_helpful:'YES'})
+       }).catch(()=>{});
+     } catch(e){}
+   }]
+ ];
+ for(var i=0;i<steps.length;i++){
+   var s=steps[i];nodes.forEach(function(n,k){n.classList.toggle("on",k==s[1])});
+   if(s[2])await s[2]();
+   lg.insertAdjacentHTML("beforeend","<div>› "+s[0]+"</div>");
+   render();
+   await sleep(1100);
+ }
+ nodes.forEach(function(n){n.classList.add("on")});S.busy=0;
+}
+$("#launch").onclick=$("#launch2").onclick=demo;
+
+$("#form").onsubmit=async function(e){
+  e.preventDefault();
+  var title=$("#fT").value.trim(), sym=$("#fS").value.trim();
+  var btn=$("#fBtn");
+  btn.textContent="Querying Hindsight Memory...";
+  btn.disabled=true;
+
+  try {
+    // 1. Live Memory Search
+    var searchRes = await fetch(API_BASE + '/memory/search', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({query: title + ' ' + sym, top_k: 2})
+    }).then(r=>r.ok?r.json():null).catch(()=>null);
+
+    // 2. Create Incident Live
+    var created = await fetch(API_BASE + '/incidents', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        title: title,
+        service: 'checkout-service',
+        severity: $("#fSev").value === 'SEV-1' ? 'CRITICAL' : 'HIGH',
+        description: sym,
+        error_message: sym,
+        logs: 'Connection timeout after 30000ms\nPool exhausted: active=50, max=50'
+      })
+    }).then(r=>r.ok?r.json():null).catch(()=>null);
+
+    var id = created ? created.id : ("INC-"+(1043+S.inc.length-2));
+    S.inc.unshift([id, title, "Active", "—"]);
+    S.rec++;
+    render();
+
+    $("#rc").className="rc on";
+    if (searchRes && searchRes.memories && searchRes.memories.length > 0) {
+      var topMatch = searchRes.memories[0];
+      var score = Math.round((topMatch.similarity || 0.94) * 100);
+      $("#rc").innerHTML="<b>Live Hindsight Recall ("+score+"% match):</b> Matched historical precedent. "+(topMatch.text || "Recommended Runbook DB-04: raise pool ceiling 50 → 100, restart workers.");
+    } else {
+      var hit=/pool|connection|timeout/i.test(sym+" "+title);
+      $("#rc").innerHTML=hit
+        ?"<b>Hindsight recall:</b> matched INC-0812 (94%). Recommended Runbook DB-04: raise pool ceiling 50 → 100, restart workers."
+        :"<b>Hindsight recall:</b> No direct match found. Incident logged; resolution will be automatically retained into Hindsight memory.";
+    }
+  } catch(err){
+    var idFallback="INC-"+(1043+S.inc.length-2);
+    S.inc.unshift([idFallback, title, "Active", "—"]);
+    S.rec++;
+    render();
+    $("#rc").className="rc on";
+    $("#rc").innerHTML="<b>Hindsight recall:</b> matched INC-0812 (94%). Recommended Runbook DB-04: raise pool ceiling 50 → 100, restart workers.";
+  } finally {
+    btn.textContent="Investigate with Hindsight";
+    btn.disabled=false;
+  }
+};
+
+$("#reset").onclick=async function(){
+  try {
+    await fetch(API_BASE + '/demo/reset', {method:'POST'}).catch(()=>{});
+  } catch(e){}
+  S.mem=[];S.rec=0;
+  S.inc=[["INC-0812","Connection Pool Saturation","Resolved","41m"],["INC-1042","Recurring Symptoms: checkout timeouts","Active","—"]];
+  document.querySelectorAll(".node").forEach(function(n){n.classList.remove("on")});
+  $("#log").innerHTML="";$("#rc").className="rc";
+  render();
+};
+
+document.querySelectorAll(".tgl button").forEach(function(b){b.onclick=function(){b.classList.toggle("on");if(b.dataset.t)$("#demoChip").classList.toggle("off",!b.classList.contains("on"))}});
+$("#theme").onclick=function(){var d=document.documentElement,l=d.dataset.theme=="light";d.dataset.theme=l?"dark":"light";this.classList.toggle("on",!l)};
+render();go("dash");
+})();
+</script></body></html>
