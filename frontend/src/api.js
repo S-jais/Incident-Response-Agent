@@ -1,4 +1,18 @@
-const API_BASE = '/api';
+function getApiBase() {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl) {
+    const trimmed = envUrl.trim().replace(/\/+$/, '');
+    return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+  }
+  // In production (Vercel deployment), point directly to live Render backend
+  if (import.meta.env.PROD) {
+    return 'https://incident-response-agent-b268.onrender.com/api';
+  }
+  // In local development, use Vite dev proxy
+  return '/api';
+}
+
+const API_BASE = getApiBase();
 
 export async function fetchHealth() {
   const res = await fetch(`${API_BASE}/health`);
