@@ -99,8 +99,8 @@ nav.topnav button.on{color:var(--tx);border-bottom-color:var(--ac);background:co
 
 /* ── HERO ── */
 .hero{border:1px solid var(--ln);background:var(--pn);padding:40px;position:relative;overflow:hidden}
-.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:300px;height:300px;border:1px dashed var(--ln);border-radius:50%;box-shadow:0 0 0 50px transparent,0 0 0 51px var(--ln),0 0 0 110px transparent,0 0 0 111px var(--ln);pointer-events:none}
-.badge{display:inline-flex;align-items:center;gap:6px;font:12px var(--mo);color:var(--ac);border:1px solid var(--ac);padding:4px 10px;margin-bottom:20px}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:300px;height:300px;border:1px dashed var(--ln);border-radius:50%;box-shadow:0 0 0 50px transparent,0 0 0 51px var(--ln),0 0 0 110px transparent,0 0 0 111px var(--ln);pointer-events:none;z-index:0}
+.badge{display:inline-flex;align-items:center;gap:6px;font:12px var(--mo);color:var(--ac);border:1px solid var(--ac);padding:4px 10px;margin-bottom:20px;position:relative;z-index:2;background:var(--pn);max-width:100%}
 h1.hero-title{font-size:clamp(2rem,5vw,3.8rem);line-height:1.05;letter-spacing:-.04em;font-weight:800;max-width:800px;position:relative;z-index:1}
 h1.hero-title em{font-style:normal;background:var(--ac);color:#101400;padding:0 .12em}
 .hero-sub{max-width:620px;color:var(--mu);margin:18px 0 26px;position:relative;z-index:1;font-size:14px;line-height:1.6}
@@ -296,9 +296,30 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
 
 @media(max-width:600px){
   .g4,.g2,.g3,.g12{grid-template-columns:1fr}
-  .hero{padding:24px 16px}
-  .hero-title{font-size:clamp(1.75rem,7vw,2.4rem)}
-  .hero-ctas{flex-direction:column}
+  .hero{padding:24px 16px;position:relative;overflow:hidden}
+  .hero::after{
+    right:-60px;
+    top:-20px;
+    width:220px;
+    height:220px;
+    z-index:0;
+    pointer-events:none;
+  }
+  .badge{
+    position:relative;
+    z-index:2;
+    background:var(--pn);
+    font-size:11px;
+    line-height:1.45;
+    padding:5px 9px;
+    display:inline-block;
+    max-width:100%;
+    word-break:break-word;
+    margin-bottom:16px;
+  }
+  .hero-title{font-size:clamp(1.75rem,7vw,2.4rem);position:relative;z-index:2}
+  .hero-sub{position:relative;z-index:2}
+  .hero-ctas{flex-direction:column;position:relative;z-index:2}
   .hero-ctas .btn{width:100%;text-align:center;justify-content:center}
   #healthLabel{display:none}
   #healthPill{padding:4px 7px}
