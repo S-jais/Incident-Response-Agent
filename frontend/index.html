@@ -273,7 +273,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
       <span class="sb-icon">▶</span>Memory Learning Demo
       <span class="sb-badge">JUDGES</span>
     </button>
-    <button class="sb-link" data-sidebar="incident-detail" onclick="openINC(S.selectedIncId||'INC-1042')">
+    <button class="sb-link" data-sidebar="incident-detail" onclick="openINC()">
       <span class="sb-icon">🔍</span>Incident Workspace
     </button>
     <button class="sb-link" data-sidebar="ba" onclick="go('ba')">
@@ -1003,6 +1003,7 @@ const S = {
   memStats: null,
   memRecent: [],
 };
+window.S = S;
 
 // ─── NAV ────────────────────────────────────────────────
 // Primary tabs shown in topbar (3 max)
@@ -1052,9 +1053,10 @@ function go(id) {
 window.go = go;
 
 function openINC(id) {
-  S.selectedIncId = id;
+  const targetId = id || S.selectedIncId || 'INC-1042';
+  S.selectedIncId = targetId;
   go('incident-detail');
-  loadIncidentDetail(id);
+  loadIncidentDetail(targetId);
 }
 window.openINC = openINC;
 
@@ -1476,7 +1478,7 @@ function renderDemoStep() {
     const n=i+1,done=n<s,cur=n===s;
     const cls = done?'done':cur?'current':'future';
     const line = i<9?`<div class="step-line ${done?'done':'future'}"></div>`:'';
-    return `<div class="step-dot ${cls}" onclick="if(!S.demoLoading){S.demoStep=${n};renderDemoStep()}" title="${st.title}">${done?'✓':n}</div>${line}`;
+    return `<div class="step-dot ${cls}" onclick="jumpToDemoStep(${n})" title="${st.title}">${done?'✓':n}</div>${line}`;
   }).join('');
   document.getElementById('demoStepNum').textContent = s;
   document.getElementById('demoStepTitle').textContent = DEMO_STEPS[s-1].title;
@@ -1604,6 +1606,14 @@ async function demoNav(dir) {
   renderDemoStep();
 }
 window.demoNav = demoNav;
+
+function jumpToDemoStep(n) {
+  if(!S.demoLoading && n >= 1 && n <= 10) {
+    S.demoStep = n;
+    renderDemoStep();
+  }
+}
+window.jumpToDemoStep = jumpToDemoStep;
 
 async function demoSideEffect(fromStep) {
   if(S.demoLoading) return;
