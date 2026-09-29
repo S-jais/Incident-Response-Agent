@@ -25,29 +25,48 @@ a:hover{text-decoration:underline}
 .mo{font-family:var(--mo)}
 pre,code{font-family:var(--mo)}
 
-/* ── LAYOUT ── */
-.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
-main{max-width:1240px;margin:0 auto;padding:28px 20px 80px}
-footer{border-top:1px solid var(--ln);padding:20px;text-align:center;font:11px var(--mo);color:var(--mu)}
+/* ── APP SHELL LAYOUT ── */
+.app-shell{display:flex;height:100vh;flex-direction:column;overflow:hidden}
+.topbar{position:sticky;top:0;z-index:60;background:var(--bg);border-bottom:1px solid var(--ln);height:52px;display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0}
+.body-row{display:flex;flex:1;min-height:0;overflow:hidden;position:relative}
 
-/* ── HEADER / NAV ── */
-header{position:sticky;top:env(safe-area-inset-top,0);z-index:50;background:var(--bg);border-bottom:1px solid var(--ln)}
-.top{display:flex;align-items:center;gap:16px;padding:10px 20px;max-width:1240px;margin:0 auto;flex-wrap:wrap}
+/* ── SIDEBAR ── */
+.sidebar{width:230px;flex-shrink:0;border-right:1px solid var(--ln);background:var(--pn);display:flex;flex-direction:column;height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--ln) transparent;z-index:40;transition:transform .2s ease}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--ln)}
+.sb-section{padding:12px 0;border-bottom:1px solid var(--ln)}
+.sb-label{font:700 9px var(--mo);text-transform:uppercase;letter-spacing:.12em;color:var(--mu);padding:0 16px;margin-bottom:4px;display:block}
+.sb-link{display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:13px;font-weight:500;color:var(--mu);cursor:pointer;border:0;background:none;width:100%;text-align:left;transition:background .12s,color .12s;border-left:2px solid transparent;white-space:nowrap}
+.sb-link:hover{background:color-mix(in srgb,var(--tx) 6%,transparent);color:var(--tx)}
+.sb-link.on{color:var(--tx);background:color-mix(in srgb,var(--ac) 8%,transparent);border-left-color:var(--ac);font-weight:600}
+.sb-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.sb-badge{font:700 9px var(--mo);background:var(--ac2);color:#fff;padding:1px 5px;margin-left:auto;animation:pulse 2s infinite;border-radius:2px}
+.sb-stat{padding:10px 16px;border-bottom:1px solid var(--ln)}
+.sb-stat-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px}
+.sb-stat-row .k{color:var(--mu)}.sb-stat-row .v{font:700 12px var(--mo)}
+.sb-footer{margin-top:auto;padding:14px 16px;border-top:1px solid var(--ln)}
+
+/* ── MAIN CONTENT ── */
+.content{flex:1;height:100%;overflow-y:auto;overflow-x:hidden;min-width:0;display:flex;flex-direction:column}
+main{padding:28px 28px 80px;max-width:1160px;flex:1}
+footer{border-top:1px solid var(--ln);padding:16px 28px;font:11px var(--mo);color:var(--mu);flex-shrink:0}
+
+/* ── TOPBAR INTERNALS ── */
 .brand{display:flex;gap:10px;align-items:center;cursor:pointer;flex:none;text-decoration:none;color:inherit}
-.brand-icon{width:36px;height:36px;background:var(--ac);color:#101400;display:grid;place-items:center;font:800 20px var(--sn);clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%);flex-shrink:0}
-.brand-text b{font-weight:800;font-size:17px;letter-spacing:-.03em;line-height:1;display:block}
-.brand-text small{font:10px var(--mo);color:var(--mu)}
-.hackbadge{font:500 9px var(--mo);background:color-mix(in srgb,var(--ac) 20%,transparent);color:var(--ac);border:1px solid var(--ac);padding:2px 6px;margin-left:6px;vertical-align:middle}
-nav{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none}
-nav::-webkit-scrollbar{display:none}
-nav button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 11px;color:var(--mu);cursor:pointer;white-space:nowrap;font-size:13px;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:5px}
-nav button:hover{color:var(--tx)}
-nav button.on{color:var(--tx);border-color:var(--ac)}
+.brand-icon{width:34px;height:34px;background:var(--ac);color:#101400;display:grid;place-items:center;font:800 18px var(--sn);clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%);flex-shrink:0}
+.brand-text b{font-weight:800;font-size:15px;letter-spacing:-.03em;line-height:1;display:block}
+.brand-text small{font:9px var(--mo);color:var(--mu)}
+.hackbadge{font:500 9px var(--mo);background:color-mix(in srgb,var(--ac) 20%,transparent);color:var(--ac);border:1px solid var(--ac);padding:1px 5px;margin-left:5px;vertical-align:middle}
+.divider{width:1px;height:24px;background:var(--ln);flex-shrink:0}
+nav.topnav{display:flex;gap:1px}
+nav.topnav button{background:none;border:0;border-bottom:2px solid transparent;padding:6px 12px;color:var(--mu);cursor:pointer;white-space:nowrap;font-size:13px;font-weight:500;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:5px;height:52px}
+nav.topnav button:hover{color:var(--tx)}
+nav.topnav button.on{color:var(--tx);border-bottom-color:var(--ac)}
+.topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center}
 .jd{font:600 9px var(--mo);background:var(--ac2);color:#fff;padding:2px 5px;border-radius:2px;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
-.hdr-right{display:flex;gap:8px;align-items:center;flex:none}
-.pill{font:11px var(--mo);border:1px solid var(--ln);padding:5px 10px;background:var(--pn);cursor:pointer;display:flex;gap:6px;align-items:center;white-space:nowrap}
-.pill i{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.pill{font:11px var(--mo);border:1px solid var(--ln);padding:4px 9px;background:var(--pn);display:flex;gap:6px;align-items:center;white-space:nowrap}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--ok);flex-shrink:0}
 .pill .ping{position:relative;display:inline-flex}
 .pill .ping::before{content:'';position:absolute;inset:0;border-radius:50%;background:var(--ok);animation:ping 1.5s ease-out infinite;opacity:.75}
 .pill.offline i{background:var(--mu)}
@@ -59,9 +78,9 @@ nav button.on{color:var(--tx);border-color:var(--ac)}
 .btn.em{background:var(--em);color:#052e16;border-color:var(--em);box-shadow:4px 4px 0 var(--ok)}
 .btn.em:hover{box-shadow:6px 6px 0 var(--ok)}
 .btn.sm{padding:7px 12px;font-size:12px}
-.btn.xs{padding:5px 10px;font-size:11px;font-family:var(--mo)}
+.btn.xs{padding:5px 9px;font-size:11px;font-family:var(--mo)}
 .btn.ghost{background:color-mix(in srgb,var(--tx) 8%,transparent);border-color:var(--ln)}
-.btn-icon{background:none;border:1px solid var(--ln);padding:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.btn-icon{background:none;border:1px solid var(--ln);padding:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;font-size:14px}
 .btn-icon:hover{background:color-mix(in srgb,var(--tx) 8%,transparent)}
 @keyframes ping{75%,100%{transform:scale(2);opacity:0}}
 
@@ -202,33 +221,118 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
 .confidence-fill{height:100%;background:var(--ac);transition:width .5s}
 
 /* ── RESPONSIVE ── */
-@media(max-width:1000px){.inc-detail-grid{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}.loop{grid-template-columns:1fr}.node{margin:-1px 0 0}.top{flex-wrap:wrap}.hdr-right{order:3}}
-@media(max-width:600px){.g4,.g2,.g3,.g12{grid-template-columns:1fr}.hero{padding:24px}}
+.sb-toggle-btn{display:none}
+.sb-backdrop{display:none}
+@media(max-width:1100px){.inc-detail-grid{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}.loop{grid-template-columns:1fr}.node{margin:-1px 0 0}}
+@media(max-width:860px){
+  .sb-toggle-btn{display:flex!important}
+  .sidebar{position:fixed;top:52px;left:0;bottom:0;z-index:90;transform:translateX(-100%);box-shadow:6px 0 24px rgba(0,0,0,.6)}
+  .sidebar.mobile-open{transform:translateX(0)}
+  .sb-backdrop{display:none;position:fixed;inset:52px 0 0 0;background:rgba(0,0,0,.5);z-index:85}
+  .sb-backdrop.mobile-open{display:block}
+  .content{overflow-x:hidden}
+}
+@media(max-width:600px){.g4,.g2,.g3,.g12{grid-template-columns:1fr}.hero{padding:24px}main{padding:18px 14px 60px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
+<div class="app-shell">
 
-<!-- ====== HEADER ====== -->
-<header>
-  <div class="top">
-    <a class="brand" href="#" onclick="go('dash');return false">
-      <div class="brand-icon">H</div>
-      <div class="brand-text">
-        <b>HindsightOps<span class="hackbadge">HackWithHyd 3.0</span></b>
-        <small>An AI incident responder that remembers what happened before</small>
-      </div>
-    </a>
-    <nav id="nav"></nav>
-    <div class="hdr-right">
-      <div class="pill" id="healthPill"><span class="ping"><i></i></span><span id="healthLabel">Connecting...</span></div>
-      <button class="btn xs ghost" id="resetBtn" onclick="resetDemo()">↺ Reset Demo</button>
-      <button class="btn-icon" title="Toggle theme" onclick="toggleTheme()" style="font-size:14px">◑</button>
+<!-- ====== TOPBAR ====== -->
+<header class="topbar">
+  <button class="btn-icon sb-toggle-btn" id="sbToggle" onclick="toggleSidebar()" title="Toggle Sidebar">☰</button>
+  <a class="brand" href="#" onclick="go('dash');return false">
+    <div class="brand-icon">H</div>
+    <div class="brand-text">
+      <b>HindsightOps<span class="hackbadge">HackWithHyd 3.0</span></b>
+      <small>AI incident responder that remembers</small>
     </div>
+  </a>
+  <div class="divider"></div>
+  <!-- Primary nav: 3 most important links only -->
+  <nav class="topnav" id="topnav"></nav>
+  <div class="topbar-right">
+    <div class="pill" id="healthPill"><span class="ping"><i></i></span><span id="healthLabel">Connecting...</span></div>
+    <button class="btn xs ghost" id="resetBtn" onclick="resetDemo()">↺ Reset Demo</button>
+    <button class="btn-icon" title="Toggle theme" onclick="toggleTheme()">◑</button>
   </div>
 </header>
 
-<!-- ====== MAIN ====== -->
+<!-- ====== BODY ROW ====== -->
+<div class="body-row">
+<div class="sb-backdrop" id="sbBackdrop" onclick="toggleSidebar()"></div>
+
+<!-- ====== LEFT SIDEBAR ====== -->
+<aside class="sidebar">
+
+  <!-- Investigate section -->
+  <div class="sb-section">
+    <span class="sb-label">Investigate</span>
+    <button class="sb-link" data-sidebar="demo" onclick="go('demo')">
+      <span class="sb-icon">▶</span>Memory Learning Demo
+      <span class="sb-badge">JUDGES</span>
+    </button>
+    <button class="sb-link" data-sidebar="incident-detail" onclick="openINC(S.selectedIncId||'INC-1042')">
+      <span class="sb-icon">🔍</span>Incident Workspace
+    </button>
+    <button class="sb-link" data-sidebar="ba" onclick="go('ba')">
+      <span class="sb-icon">⇄</span>Before vs After
+    </button>
+  </div>
+
+  <!-- Memory section -->
+  <div class="sb-section">
+    <span class="sb-label">Memory</span>
+    <button class="sb-link" data-sidebar="memory" onclick="go('memory')">
+      <span class="sb-icon">🧠</span>Hindsight Memory
+    </button>
+    <button class="sb-link" data-sidebar="runbooks" onclick="go('runbooks')">
+      <span class="sb-icon">📖</span>Runbooks Catalog
+    </button>
+  </div>
+
+  <!-- System section -->
+  <div class="sb-section">
+    <span class="sb-label">System</span>
+    <button class="sb-link" data-sidebar="settings" onclick="go('settings')">
+      <span class="sb-icon">⚙</span>Settings & Diagnostics
+    </button>
+  </div>
+
+  <!-- Live Status -->
+  <div class="sb-section">
+    <span class="sb-label">Live Status</span>
+    <div class="sb-stat">
+      <div class="sb-stat-row"><span class="k">Hindsight</span><span class="v" id="sbHindsight" style="color:var(--mu)">—</span></div>
+      <div class="sb-stat-row"><span class="k">LLM</span><span class="v" id="sbLlm" style="color:var(--mu)">—</span></div>
+      <div class="sb-stat-row"><span class="k">Database</span><span class="v" id="sbDb" style="color:var(--em)">—</span></div>
+      <div class="sb-stat-row"><span class="k">Mode</span><span class="v" id="sbMode" style="color:var(--ac)">—</span></div>
+    </div>
+  </div>
+
+  <!-- Memory Quick Stats -->
+  <div class="sb-section">
+    <span class="sb-label">Memory Bank</span>
+    <div class="sb-stat">
+      <div class="sb-stat-row"><span class="k">Memories</span><span class="v" id="sbMemStat" style="color:var(--cyan)">28</span></div>
+      <div class="sb-stat-row"><span class="k">Recalls</span><span class="v" id="sbRecStat" style="color:var(--ac)">0</span></div>
+      <div class="sb-stat-row"><span class="k">Avg MTTR</span><span class="v" style="color:var(--em)">13.6m</span></div>
+      <div class="sb-stat-row"><span class="k">Loop</span><span class="v" style="color:var(--em)">Active ✓</span></div>
+    </div>
+  </div>
+
+  <div class="sb-footer">
+    <div style="font:10px var(--mo);color:var(--mu);line-height:1.9">
+      HindsightOps<br>
+      HackWithHyderabad 3.0<br>
+      <span style="color:var(--ac)">AI Agents That Learn</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ====== CONTENT ====== -->
+<div class="content">
 <main>
 
 <!-- ========================================
@@ -802,6 +906,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
     <span>Persistent Institutional Memory for SREs</span>
   </div>
 </footer>
+</div><!-- /.content -->
+</div><!-- /.body-row -->
+</div><!-- /.app-shell -->
 
 <!-- ====== RUNBOOK MODAL ====== -->
 <div class="modal-bg" id="rbModal" style="display:none" onclick="if(event.target===this)closeRbModal()">
@@ -898,26 +1005,42 @@ const S = {
 };
 
 // ─── NAV ────────────────────────────────────────────────
-const TABS = [
+// Primary tabs shown in topbar (3 max)
+const TOP_TABS = [
   {id:'dash', label:'Dashboard'},
   {id:'incidents', label:'Incidents'},
   {id:'new-incident', label:'New Incident'},
-  {id:'demo', label:'Memory Learning Demo<span class="jd">JUDGES</span>'},
-  {id:'ba', label:'Before vs After'},
-  {id:'memory', label:'Hindsight Memory'},
-  {id:'runbooks', label:'Runbooks'},
-  {id:'settings', label:'Settings'},
 ];
+// Secondary tabs live in the sidebar (rendered in HTML)
+const SIDEBAR_TABS = ['demo','ba','memory','runbooks','settings','incident-detail'];
 
-document.getElementById('nav').innerHTML = TABS.map(t=>
+document.getElementById('topnav').innerHTML = TOP_TABS.map(t=>
   `<button onclick="go('${t.id}')" data-tab="${t.id}">${t.label}</button>`
 ).join('');
+
+function toggleSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('sbBackdrop');
+  if(sb) sb.classList.toggle('mobile-open');
+  if(bd) bd.classList.toggle('mobile-open');
+}
+window.toggleSidebar = toggleSidebar;
 
 function go(id) {
   S.activeTab = id;
   document.querySelectorAll('.v').forEach(e=>e.classList.toggle('on', e.id===id));
-  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===id));
-  scrollTo(0,0);
+  // Highlight topnav buttons
+  document.querySelectorAll('#topnav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===id));
+  // Highlight sidebar links
+  document.querySelectorAll('.sb-link[data-sidebar]').forEach(b=>b.classList.toggle('on', b.dataset.sidebar===id));
+  // Close mobile drawer if open
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('sbBackdrop');
+  if(sb) sb.classList.remove('mobile-open');
+  if(bd) bd.classList.remove('mobile-open');
+  // Scroll content area to top
+  const cont = document.querySelector('.content');
+  if(cont) cont.scrollTo(0,0);
   // Lazy load section data
   if(id==='incidents') loadIncidentsList();
   if(id==='memory') loadMemory();
@@ -945,6 +1068,15 @@ async function checkHealth() {
     document.getElementById('healthPill').className = 'pill' + (live?'':' offline');
     const dot = document.querySelector('#healthPill .ping i');
     if(dot) dot.style.background = live ? 'var(--ok)' : 'var(--cyan)';
+    // Populate sidebar status
+    const sbH = document.getElementById('sbHindsight');
+    const sbL = document.getElementById('sbLlm');
+    const sbD = document.getElementById('sbDb');
+    const sbM = document.getElementById('sbMode');
+    if(sbH) { sbH.textContent = live ? 'Live ✓' : 'Demo'; sbH.style.color = live?'var(--em)':'var(--cyan)'; }
+    if(sbL) { const liveL=h.llm?.includes('Connected (Live)'); sbL.textContent = liveL?'Live ✓':'Demo'; sbL.style.color=liveL?'var(--em)':'var(--cyan)'; }
+    if(sbD) { sbD.textContent = h.database||'OK'; sbD.style.color='var(--em)'; }
+    if(sbM) { sbM.textContent = h.is_demo_mode?'Demo':'Live'; }
   } catch(e) {
     document.getElementById('healthLabel').textContent = 'Backend Offline';
     document.getElementById('healthPill').className = 'pill offline';
@@ -963,6 +1095,11 @@ async function loadDashboard() {
       document.getElementById('sOut').textContent = stats.active_incidents ?? 1;
       document.getElementById('sMem').textContent = stats.memories_retained ?? 28;
       document.getElementById('sRec').textContent = stats.memories_recalled_total ?? 0;
+      // Update sidebar stats
+      const sbMem = document.getElementById('sbMemStat');
+      const sbRec = document.getElementById('sbRecStat');
+      if(sbMem) sbMem.textContent = stats.memories_retained ?? 28;
+      if(sbRec) sbRec.textContent = stats.memories_recalled_total ?? 0;
     }
     renderDashTable(incs.slice(0,6));
   } catch(e) {
@@ -1726,9 +1863,13 @@ function init() {
   loadDashboard();
   renderDemoStep();
   renderCompMatrix();
-  // Handle URL hash for direct deep-links
+  // Handle URL hash for direct deep-links or default to dash
   const hash = location.hash.replace('#','');
-  if(hash && document.getElementById(hash)) go(hash);
+  if(hash && document.getElementById(hash)) {
+    go(hash);
+  } else {
+    go('dash');
+  }
 }
 
 init();
