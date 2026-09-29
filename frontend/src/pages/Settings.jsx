@@ -117,27 +117,6 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Setup Instructions Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-          <Key className="w-4 h-4 text-cyan-400" />
-          <span>Configuring Live Hindsight Cloud & Groq Credentials</span>
-        </h3>
-
-        <div className="space-y-3 text-xs text-slate-300 leading-relaxed font-sans">
-          <p>
-            To switch from Demo Mode to Live Hindsight Cloud:
-          </p>
-
-          <ol className="list-decimal list-inside space-y-2 font-mono text-[11px] text-slate-300 bg-slate-950 p-4 rounded-xl border border-slate-800">
-            <li>Register at <a href="https://ui.hindsight.vectorize.io" target="_blank" rel="noreferrer" className="text-cyan-400 underline">ui.hindsight.vectorize.io</a>.</li>
-            <li>Apply promo code <strong className="text-brand-300">MEMHACK99</strong> for $50 hackathon credits in billing.</li>
-            <li>Generate an API key and copy it into your local <strong className="text-white">.env</strong> file under <code className="text-brand-400">HINDSIGHT_API_KEY</code>.</li>
-            <li>Add your Groq API key from <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="text-cyan-400 underline">console.groq.com</a> under <code className="text-brand-400">GROQ_API_KEY</code>.</li>
-            <li>Restart the backend server. The health pill will immediately update to <strong className="text-emerald-400">Hindsight Cloud (Live)</strong>.</li>
-          </ol>
-        </div>
-      </div>
     </div>
   );
 }
