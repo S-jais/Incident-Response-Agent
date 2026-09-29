@@ -60,11 +60,10 @@ main{padding:28px 28px 80px;max-width:1160px;width:100%;margin:0 auto;flex:1;tra
 footer{border-top:1px solid var(--ln);padding:16px 28px;font:11px var(--mo);color:var(--mu);flex-shrink:0}
 
 /* ── TOPBAR INTERNALS: EQUALLY DISTRIBUTED NAV ── */
-.brand{display:flex;gap:10px;align-items:center;cursor:pointer;flex:none;text-decoration:none;color:inherit}
-.brand-icon{width:34px;height:34px;background:var(--ac);color:#101400;display:grid;place-items:center;font:800 18px var(--sn);clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%);flex-shrink:0}
-.brand-text b{font-weight:800;font-size:15px;letter-spacing:-.03em;line-height:1;display:block}
-.brand-text small{font:9px var(--mo);color:var(--mu)}
-.hackbadge{font:500 9px var(--mo);background:color-mix(in srgb,var(--ac) 20%,transparent);color:var(--ac);border:1px solid var(--ac);padding:1px 5px;margin-left:5px;vertical-align:middle}
+.brand{display:flex;align-items:center;cursor:pointer;flex:none;text-decoration:none;color:inherit;padding:2px 4px}
+.brand-title{font-size:22px;font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--tx);transition:opacity .15s,transform .15s}
+.brand-title span{color:var(--ac)}
+.brand:hover .brand-title{transform:scale(1.02);opacity:.92}
 .divider{width:1px;height:24px;background:var(--ln);flex-shrink:0}
 nav.topnav{display:flex;flex:1;max-width:780px;justify-content:space-evenly;align-items:center;margin:0 12px}
 nav.topnav button{background:none;border:0;border-bottom:2px solid transparent;padding:0 14px;color:var(--mu);cursor:pointer;white-space:nowrap;font-size:13px;font-weight:600;transition:color .15s,border-color .15s,background .15s;display:flex;align-items:center;gap:6px;height:52px}
@@ -252,12 +251,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
 <!-- ====== TOPBAR ====== -->
 <header class="topbar">
   <button class="btn-icon sb-toggle-btn" id="sbToggle" onclick="toggleSidebar()" title="Toggle Sidebar">☰</button>
-  <a class="brand" href="#" onclick="go('dash');return false">
-    <div class="brand-icon">H</div>
-    <div class="brand-text">
-      <b>HindsightOps<span class="hackbadge">HackWithHyd 3.0</span></b>
-      <small>AI incident responder that remembers</small>
-    </div>
+  <a class="brand" href="#" onclick="goHome();return false" title="HindsightOps Home">
+    <span class="brand-title">Hindsight<span>Ops</span></span>
   </a>
   <div class="divider"></div>
   <!-- Primary nav: 5 equally distributed links -->
@@ -1102,6 +1097,26 @@ function go(id) {
   if(id==='ba') renderCompMatrix();
 }
 window.go = go;
+
+function goHome() {
+  S.activeTab = 'dash';
+  updateNavHighlight('dash');
+
+  // Close mobile drawer if open
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('sbBackdrop');
+  if(sb) sb.classList.remove('mobile-open');
+  if(bd) bd.classList.remove('mobile-open');
+
+  // Smooth scroll to top of page
+  const cont = document.querySelector('.content');
+  if(cont) {
+    S.isNavigating = true;
+    cont.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => { S.isNavigating = false; }, 650);
+  }
+}
+window.goHome = goHome;
 
 // ─── SCROLLSPY: SLIDE DOWN VISITS EVERY LINK AUTOMATICALLY ───
 function initScrollspy() {
