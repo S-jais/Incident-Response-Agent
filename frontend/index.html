@@ -3,297 +3,1737 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HindsightOps | AI Incident Responder That Remembers</title>
+<meta name="description" content="AI incident response agent powered by Hindsight persistent memory. Resolves production incidents by recalling historical patterns, postmortems, and runbooks.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0d0e11;--pn:#15171c;--ln:#262a32;--tx:#efeee9;--mu:#8b909a;--ac:#c8f542;--ac2:#ff6b4a;--bl:#6ea8ff;--ok:#4ade80;
---sn:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;--mo:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:light){:root:not([data-theme=dark]){--bg:#f4f2ea;--pn:#fff;--ln:#dcd8cb;--tx:#16181d;--mu:#666b75;--ac:#4d6a00;--ac2:#d1401f;--bl:#1f5fd1;--ok:#178a45}}
-:root[data-theme=light]{--bg:#f4f2ea;--pn:#fff;--ln:#dcd8cb;--tx:#16181d;--mu:#666b75;--ac:#4d6a00;--ac2:#d1401f;--bl:#1f5fd1;--ok:#178a45}
-:root[data-theme=dark]{--bg:#0d0e11;--pn:#15171c;--ln:#262a32;--tx:#efeee9;--mu:#8b909a;--ac:#c8f542;--ac2:#ff6b4a;--bl:#6ea8ff;--ok:#4ade80}
-*{box-sizing:border-box;margin:0}
-body{background:var(--bg);color:var(--tx);font:15px/1.55 var(--sn);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-button,input,select,textarea{font:inherit;color:inherit}
+:root{
+  --bg:#0d0e11;--pn:#15171c;--ln:#262a32;--tx:#efeee9;--mu:#8b909a;
+  --ac:#c8f542;--ac2:#ff6b4a;--bl:#6ea8ff;--ok:#4ade80;--rose:#f87171;--amber:#fbbf24;--cyan:#22d3ee;--em:#34d399;
+  --sn:"Bricolage Grotesque",system-ui,-apple-system,sans-serif;
+  --mo:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media(prefers-color-scheme:light){:root:not([data-theme=dark]){--bg:#f4f2ea;--pn:#fff;--ln:#dcd8cb;--tx:#16181d;--mu:#666b75;--ac:#4d6a00;--ac2:#d1401f;--bl:#1f5fd1;--ok:#178a45;--rose:#dc2626;--amber:#d97706;--cyan:#0891b2;--em:#059669}}
+:root[data-theme=light]{--bg:#f4f2ea;--pn:#fff;--ln:#dcd8cb;--tx:#16181d;--mu:#666b75;--ac:#4d6a00;--ac2:#d1401f;--bl:#1f5fd1;--ok:#178a45;--rose:#dc2626;--amber:#d97706;--cyan:#0891b2;--em:#059669}
+:root[data-theme=dark]{--bg:#0d0e11;--pn:#15171c;--ln:#262a32;--tx:#efeee9;--mu:#8b909a;--ac:#c8f542;--ac2:#ff6b4a;--bl:#6ea8ff;--ok:#4ade80;--rose:#f87171;--amber:#fbbf24;--cyan:#22d3ee;--em:#34d399}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font:15px/1.6 var(--sn);-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit;outline:none}
+a{color:var(--bl);text-decoration:none}
+a:hover{text-decoration:underline}
 .mo{font-family:var(--mo)}
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);border-bottom:1px solid var(--ln)}
-.top{max-width:1240px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:18px}
-.brand{display:flex;gap:10px;align-items:center;cursor:pointer;flex:none}
-.brand i{width:34px;height:34px;background:var(--ac);color:#101400;display:grid;place-items:center;font:800 18px var(--sn);font-style:normal;clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%)}
-.brand b{font-weight:800;font-size:18px;letter-spacing:-.02em;display:block;line-height:1}
-.brand small{font:10px var(--mo);color:var(--mu)}
+pre,code{font-family:var(--mo)}
+
+/* ── LAYOUT ── */
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+main{max-width:1240px;margin:0 auto;padding:28px 20px 80px}
+footer{border-top:1px solid var(--ln);padding:20px;text-align:center;font:11px var(--mo);color:var(--mu)}
+
+/* ── HEADER / NAV ── */
+header{position:sticky;top:env(safe-area-inset-top,0);z-index:50;background:var(--bg);border-bottom:1px solid var(--ln)}
+.top{display:flex;align-items:center;gap:16px;padding:10px 20px;max-width:1240px;margin:0 auto;flex-wrap:wrap}
+.brand{display:flex;gap:10px;align-items:center;cursor:pointer;flex:none;text-decoration:none;color:inherit}
+.brand-icon{width:36px;height:36px;background:var(--ac);color:#101400;display:grid;place-items:center;font:800 20px var(--sn);clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%);flex-shrink:0}
+.brand-text b{font-weight:800;font-size:17px;letter-spacing:-.03em;line-height:1;display:block}
+.brand-text small{font:10px var(--mo);color:var(--mu)}
+.hackbadge{font:500 9px var(--mo);background:color-mix(in srgb,var(--ac) 20%,transparent);color:var(--ac);border:1px solid var(--ac);padding:2px 6px;margin-left:6px;vertical-align:middle}
 nav{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none}
 nav::-webkit-scrollbar{display:none}
-nav button{background:none;border:0;padding:8px 12px;color:var(--mu);cursor:pointer;white-space:nowrap;font-size:14px;border-bottom:2px solid transparent;transition:color .15s}
+nav button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 11px;color:var(--mu);cursor:pointer;white-space:nowrap;font-size:13px;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:5px}
 nav button:hover{color:var(--tx)}
 nav button.on{color:var(--tx);border-color:var(--ac)}
-.jd{font:500 9px var(--mo);background:var(--ac2);color:#fff;padding:2px 5px;margin-left:6px;vertical-align:middle}
-.st{display:flex;gap:8px;flex:none}
-.chip{font:12px var(--mo);border:1px solid var(--ln);padding:7px 11px;background:var(--pn);cursor:pointer;display:flex;gap:7px;align-items:center}
-.chip i{width:7px;height:7px;border-radius:50%;background:var(--ok)}
-.chip.off i{background:var(--mu)}
-main{max-width:1240px;margin:0 auto;padding:28px 20px 80px}
-.v{display:none}.v.on{display:block;animation:in .3s}
-@keyframes in{from{opacity:0;transform:translateY(8px)}}
-.hero{border:1px solid var(--ln);background:var(--pn);padding:40px;position:relative;overflow:hidden}
-.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:280px;height:280px;border:1px dashed var(--ln);border-radius:50%;box-shadow:0 0 0 40px transparent,0 0 0 41px var(--ln),0 0 0 90px transparent,0 0 0 91px var(--ln)}
-.badge{display:inline-block;font:12px var(--mo);color:var(--ac);border:1px solid var(--ac);padding:4px 10px;margin-bottom:22px}
-h1{font-size:clamp(2.2rem,5.5vw,4.2rem);line-height:1;letter-spacing:-.04em;font-weight:800;max-width:760px;position:relative;z-index:1}
-h1 em{font-style:normal;background:var(--ac);color:#101400;padding:0 .12em}
-.hero p{max-width:600px;color:var(--mu);margin:20px 0 28px;position:relative;z-index:1}
-.row{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
-.btn{border:1px solid var(--ln);background:none;padding:12px 18px;cursor:pointer;font-weight:600;transition:transform .15s,border-color .15s}
+.jd{font:600 9px var(--mo);background:var(--ac2);color:#fff;padding:2px 5px;border-radius:2px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.hdr-right{display:flex;gap:8px;align-items:center;flex:none}
+.pill{font:11px var(--mo);border:1px solid var(--ln);padding:5px 10px;background:var(--pn);cursor:pointer;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.pill .ping{position:relative;display:inline-flex}
+.pill .ping::before{content:'';position:absolute;inset:0;border-radius:50%;background:var(--ok);animation:ping 1.5s ease-out infinite;opacity:.75}
+.pill.offline i{background:var(--mu)}
+.btn{border:1px solid var(--ln);background:none;padding:10px 16px;cursor:pointer;font-weight:600;font-size:13px;transition:transform .15s,border-color .15s,box-shadow .15s}
 .btn:hover{transform:translate(-2px,-2px);border-color:var(--tx)}
+.btn:active{transform:translate(0,0)}
 .btn.p{background:var(--ac);color:#101400;border-color:var(--ac);box-shadow:4px 4px 0 var(--ac2)}
 .btn.p:hover{box-shadow:6px 6px 0 var(--ac2)}
+.btn.em{background:var(--em);color:#052e16;border-color:var(--em);box-shadow:4px 4px 0 var(--ok)}
+.btn.em:hover{box-shadow:6px 6px 0 var(--ok)}
+.btn.sm{padding:7px 12px;font-size:12px}
+.btn.xs{padding:5px 10px;font-size:11px;font-family:var(--mo)}
+.btn.ghost{background:color-mix(in srgb,var(--tx) 8%,transparent);border-color:var(--ln)}
+.btn-icon{background:none;border:1px solid var(--ln);padding:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.btn-icon:hover{background:color-mix(in srgb,var(--tx) 8%,transparent)}
+@keyframes ping{75%,100%{transform:scale(2);opacity:0}}
+
+/* ── SECTIONS ── */
+.v{display:none}.v.on{display:block;animation:fadein .25s}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}}
+
+/* ── HERO ── */
+.hero{border:1px solid var(--ln);background:var(--pn);padding:40px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:300px;height:300px;border:1px dashed var(--ln);border-radius:50%;box-shadow:0 0 0 50px transparent,0 0 0 51px var(--ln),0 0 0 110px transparent,0 0 0 111px var(--ln);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:6px;font:12px var(--mo);color:var(--ac);border:1px solid var(--ac);padding:4px 10px;margin-bottom:20px}
+h1.hero-title{font-size:clamp(2rem,5vw,3.8rem);line-height:1.05;letter-spacing:-.04em;font-weight:800;max-width:800px;position:relative;z-index:1}
+h1.hero-title em{font-style:normal;background:var(--ac);color:#101400;padding:0 .12em}
+.hero-sub{max-width:620px;color:var(--mu);margin:18px 0 26px;position:relative;z-index:1;font-size:14px;line-height:1.6}
+.hero-ctas{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
+
+/* ── STAT GRID ── */
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:14px 0}
-.stat{background:var(--pn);border:1px solid var(--ln);padding:20px;border-top:3px solid var(--c,var(--ac))}
-.stat label{font:11px var(--mo);letter-spacing:.1em;color:var(--mu);text-transform:uppercase}
-.stat b{display:block;font:800 40px/1.2 var(--sn);margin:8px 0 2px}
-.stat b s{font:500 12px var(--mo);color:var(--ok);text-decoration:none}
+.stat{background:var(--pn);border:1px solid var(--ln);padding:20px;border-top:3px solid var(--c,var(--ac));position:relative;overflow:hidden}
+.stat-icon{position:absolute;top:16px;right:16px;width:28px;height:28px;display:grid;place-items:center;background:color-mix(in srgb,var(--c,var(--ac)) 12%,transparent);border-radius:50%}
+.stat label{font:11px var(--mo);letter-spacing:.1em;color:var(--mu);text-transform:uppercase;display:block}
+.stat b{display:block;font:800 38px/1.2 var(--sn);margin:6px 0 2px}
+.stat s{font:600 12px var(--mo);color:var(--ok);text-decoration:none}
 .stat span{color:var(--mu);font-size:13px}
+
+/* ── PANELS ── */
 .panel{background:var(--pn);border:1px solid var(--ln);padding:24px;margin-top:14px}
-.panel h2{font-size:22px;letter-spacing:-.02em}
-.panel>p{color:var(--mu);font-size:14px}
-.loop{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:22px;counter-reset:s}
-.node{padding:18px 16px;border:1px solid var(--ln);margin-left:-1px;opacity:.45;transition:opacity .3s,background .3s;position:relative}
-.node.on{opacity:1;background:color-mix(in srgb,var(--ac) 10%,var(--pn));border-color:var(--ac);z-index:1}
-.node small{font:10px var(--mo);color:var(--mu);letter-spacing:.08em;display:block;margin-bottom:8px}
-.node b{display:block}.node span{font-size:13px;color:var(--mu)}
+.panel h2{font-size:20px;letter-spacing:-.02em;font-weight:800}
+.panel-sub{color:var(--mu);font-size:13px;margin-top:4px}
+.panel-hdr{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+
+/* ── MEMORY LOOP ── */
+.loop{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:20px}
+.node{padding:16px;border:1px solid var(--ln);margin-left:-1px;opacity:.4;transition:opacity .3s,background .3s;position:relative;cursor:pointer}
+.node.on{opacity:1;background:color-mix(in srgb,var(--ac) 8%,var(--pn));border-color:var(--ac);z-index:1}
+.node small{font:10px var(--mo);color:var(--mu);letter-spacing:.07em;display:block;margin-bottom:6px;text-transform:uppercase}
+.node b{display:block;font-size:13px;font-weight:700;margin-bottom:3px}
+.node span{font-size:12px;color:var(--mu)}
+
+/* ── TABLES ── */
 table{width:100%;border-collapse:collapse;margin-top:14px}
-th{font:11px var(--mo);text-align:left;color:var(--mu);text-transform:uppercase;padding:10px;border-bottom:1px solid var(--ln)}
-td{padding:14px 10px;border-bottom:1px solid var(--ln);font-size:14px}
-.tg{font:11px var(--mo);padding:3px 8px;border:1px solid currentColor}
-.tg.a{color:var(--ac2)}.tg.r{color:var(--ok)}
+th{font:11px var(--mo);text-align:left;color:var(--mu);text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--ln)}
+td{padding:12px 12px;border-bottom:1px solid var(--ln);font-size:13px}
+tr.row-link{cursor:pointer;transition:background .15s}
+tr.row-link:hover{background:color-mix(in srgb,var(--ac) 4%,var(--pn))}
+tr.row-link:hover td:first-child{color:var(--ac)}
+
+/* ── TAGS / CHIPS ── */
+.tag{font:11px var(--mo);padding:3px 8px;border:1px solid currentColor;display:inline-flex;align-items:center;gap:4px}
+.tag.active{color:var(--ac2)}.tag.resolved{color:var(--ok)}.tag.investigating{color:var(--amber)}
+.tag.crit{color:var(--rose)}.tag.high{color:var(--amber)}.tag.med{color:var(--bl)}.tag.low{color:var(--mu)}
+.tag.mem{color:var(--cyan);border-color:color-mix(in srgb,var(--cyan) 40%,transparent);background:color-mix(in srgb,var(--cyan) 8%,transparent)}
+.tag.rb{color:var(--ac);border-color:color-mix(in srgb,var(--ac) 40%,transparent);background:color-mix(in srgb,var(--ac) 8%,transparent)}
+
+/* ── TWO COL GRID ── */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:14px}
+
+/* ── CARD ── */
 .card{border:1px solid var(--ln);background:var(--pn);padding:22px}
-.card.bad{border-top:3px solid var(--ac2)}.card.good{border-top:3px solid var(--ac)}
-.card h3{margin-bottom:12px}.card li{margin:0 0 9px 18px;color:var(--mu);font-size:14px}
-form{display:grid;gap:14px;margin-top:16px;max-width:620px}
-label.f{display:grid;gap:6px;font:12px var(--mo);color:var(--mu)}
-input,select,textarea{background:var(--bg);border:1px solid var(--ln);padding:11px;font-family:var(--sn);font-size:14px;outline:0}
+.card.border-rose{border-top:3px solid var(--rose)}.card.border-green{border-top:3px solid var(--ok)}.card.border-ac{border-top:3px solid var(--ac)}
+.card h3{font-size:14px;font-weight:700;margin-bottom:10px}
+.card ul{padding-left:20px}
+.card li{color:var(--mu);font-size:13px;margin-bottom:7px;line-height:1.5}
+.card li strong{color:var(--tx)}
+
+/* ── FORMS ── */
+.field{display:grid;gap:6px}
+.field label{font:11px var(--mo);color:var(--mu);text-transform:uppercase;letter-spacing:.08em}
+input[type=text],input[type=number],select,textarea{background:var(--bg);border:1px solid var(--ln);padding:10px 12px;font-family:var(--sn);font-size:13px;width:100%;transition:border-color .15s}
 input:focus,select:focus,textarea:focus{border-color:var(--ac)}
-.rc{margin-top:16px;padding:16px;border:1px dashed var(--ac);display:none;font-size:14px}
+.form-grid{display:grid;gap:14px}
+.rc{margin-top:14px;padding:14px 16px;border:1px dashed var(--ac);display:none;font-size:13px;line-height:1.6}
 .rc.on{display:block}
-.tgl{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid var(--ln)}
-.tgl button{width:44px;height:24px;background:var(--ln);border:0;position:relative;cursor:pointer}
-.tgl button::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;background:var(--tx);transition:transform .2s}
-.tgl button.on{background:var(--ac)}.tgl button.on::after{transform:translateX(20px);background:#101400}
-.mem{padding:14px;border-left:3px solid var(--ac);background:var(--bg);margin-top:10px;font-size:14px}
-.mem small{font:11px var(--mo);color:var(--mu);display:block}
-.empty{color:var(--mu);padding:20px 0;font-size:14px}
-@media (max-width:900px){.g4,.g2{grid-template-columns:1fr 1fr}.loop{grid-template-columns:1fr}.node{margin:-1px 0 0}.top{flex-wrap:wrap}.st{order:2}.hero{padding:26px}}
-@media (max-width:560px){.g4,.g2{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-</style></head><body>
-<header><div class="top">
- <div class="brand" data-go="dash"><i>H</i><div><b>HindsightOps</b><small>Incident responder that remembers</small></div></div>
- <nav id="nav"></nav>
- <div class="st"><div class="chip" id="demoChip"><i></i>Hindsight Live Connected</div><div class="chip" id="reset">Reset Demo</div></div>
-</div></header>
+
+/* ── TOGGLE ── */
+.tgl{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--ln)}
+.tgl-wrap{width:44px;height:24px;background:var(--ln);border:0;position:relative;cursor:pointer;flex-shrink:0}
+.tgl-wrap::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;background:var(--tx);transition:transform .2s}
+.tgl-wrap.on{background:var(--ac)}.tgl-wrap.on::after{transform:translateX(20px);background:#101400}
+
+/* ── MEMORY ITEM ── */
+.mem-item{padding:12px 16px;border-left:3px solid var(--ac);background:color-mix(in srgb,var(--ac) 4%,var(--bg));margin-top:10px;font-size:13px}
+.mem-item small{font:11px var(--mo);color:var(--mu);display:block;margin-bottom:4px}
+
+/* ── INCIDENT DETAIL ── */
+.inc-detail-grid{display:grid;grid-template-columns:5fr 7fr;gap:20px;margin-top:16px}
+.log-terminal{background:#030712;border:1px solid var(--ln);overflow:hidden}
+.log-terminal-hdr{padding:8px 14px;border-bottom:1px solid var(--ln);display:flex;align-items:center;justify-content:space-between;background:#0a0c12}
+.log-body{padding:14px;font:11px/1.7 var(--mo);color:#9ca3af;overflow-x:auto;white-space:pre-wrap;max-height:280px;overflow-y:auto}
+.analysis-empty{padding:50px 20px;text-align:center}
+.activity-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--ln);font-size:12px}
+.activity-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.similar-card{padding:12px 14px;border:1px solid var(--ln);margin-top:10px;font:11px var(--mo);cursor:pointer;transition:border-color .15s}
+.similar-card:hover{border-color:var(--ac)}
+
+/* ── DEMO STEPPER ── */
+.stepper{display:flex;align-items:center;gap:4px;overflow-x:auto;padding:4px 0;scrollbar-width:none}
+.stepper::-webkit-scrollbar{display:none}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 11px var(--mo);cursor:pointer;flex-shrink:0;transition:background .2s,transform .2s}
+.step-dot:hover{transform:scale(1.1)}
+.step-dot.done{background:var(--ok);color:#052e16}
+.step-dot.current{background:var(--ac);color:#101400;box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 30%,transparent)}
+.step-dot.future{background:var(--ln);color:var(--mu)}
+.step-line{flex:1;height:2px;min-width:8px;flex-shrink:1}
+.step-line.done{background:var(--ok)}.step-line.future{background:var(--ln)}
+.demo-panel{padding:28px;min-height:360px;display:flex;flex-direction:column;justify-content:space-between}
+.demo-content{flex:1}
+.demo-footer{margin-top:24px;padding-top:16px;border-top:1px solid var(--ln);display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+/* ── PRESETS ── */
+.preset{padding:12px 14px;border:1px solid var(--ln);cursor:pointer;text-align:left;transition:border-color .15s,transform .1s;background:var(--pn)}
+.preset:hover{transform:translateY(-1px)}
+.preset-badge{font:10px var(--mo);padding:2px 6px;border-radius:2px}
+
+/* ── RUNBOOK MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadein .2s}
+.modal{background:var(--pn);border:1px solid var(--ln);width:100%;max-width:680px;max-height:85vh;overflow-y:auto;position:relative}
+.modal-hdr{padding:20px 24px;border-bottom:1px solid var(--ln);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--pn);z-index:1}
+.modal-body{padding:24px}
+.rb-step{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--ln)}
+.rb-num{width:22px;height:22px;border-radius:50%;background:var(--ac);color:#101400;font:700 11px var(--mo);display:grid;place-items:center;flex-shrink:0;margin-top:2px}
+.close-btn{background:none;border:1px solid var(--ln);padding:4px 8px;cursor:pointer;font-size:18px;line-height:1;color:var(--mu)}
+.close-btn:hover{color:var(--tx)}
+
+/* ── SEARCH ── */
+.search-wrap{position:relative}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--mu);width:14px;height:14px}
+.search-wrap input{padding-left:32px}
+
+/* ── RESPONSE HELPERS ── */
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+.empty{color:var(--mu);padding:20px 0;font-size:13px;text-align:center}
+.loading-text{color:var(--mu);font:12px var(--mo);padding:20px;text-align:center}
+.confidence-bar{height:3px;background:var(--ln);margin-top:4px;border-radius:0}
+.confidence-fill{height:100%;background:var(--ac);transition:width .5s}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1000px){.inc-detail-grid{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}.loop{grid-template-columns:1fr}.node{margin:-1px 0 0}.top{flex-wrap:wrap}.hdr-right{order:3}}
+@media(max-width:600px){.g4,.g2,.g3,.g12{grid-template-columns:1fr}.hero{padding:24px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ====== HEADER ====== -->
+<header>
+  <div class="top">
+    <a class="brand" href="#" onclick="go('dash');return false">
+      <div class="brand-icon">H</div>
+      <div class="brand-text">
+        <b>HindsightOps<span class="hackbadge">HackWithHyd 3.0</span></b>
+        <small>An AI incident responder that remembers what happened before</small>
+      </div>
+    </a>
+    <nav id="nav"></nav>
+    <div class="hdr-right">
+      <div class="pill" id="healthPill"><span class="ping"><i></i></span><span id="healthLabel">Connecting...</span></div>
+      <button class="btn xs ghost" id="resetBtn" onclick="resetDemo()">↺ Reset Demo</button>
+      <button class="btn-icon" title="Toggle theme" onclick="toggleTheme()" style="font-size:14px">◑</button>
+    </div>
+  </div>
+</header>
+
+<!-- ====== MAIN ====== -->
 <main>
+
+<!-- ========================================
+     SECTION: DASHBOARD
+======================================== -->
 <section class="v on" id="dash">
- <div class="hero"><span class="badge mo">HackWithHyderabad 3.0 · AI Agents That Learn Using Hindsight</span>
-  <h1>Turn every production incident into <em>institutional memory.</em></h1>
-  <p>When production fails, engineers shouldn't have to re-solve identical problems from scratch. HindsightOps recalls previous root causes, verified runbooks, and postmortems from persistent Hindsight memory.</p>
-  <div class="row"><button class="btn p" id="launch">▶ Launch 60s Judge Demo</button><button class="btn" data-go="inc">Investigate Target INC-1042 →</button><button class="btn" data-go="ba">Stateless vs Hindsight Comparison</button></div></div>
- <div class="g4">
-  <div class="stat" style="--c:var(--ac2)"><label>Active Outages</label><b id="sOut">1</b><span>Awaiting triage or resolution</span></div>
-  <div class="stat" style="--c:var(--ac)"><label>Hindsight Memories</label><b id="sMem">0</b><span>Persistent institutional facts</span></div>
-  <div class="stat" style="--c:var(--bl)"><label>Average MTTR</label><b>13.6m <s>↓ 72% MTTR</s></b><span>72% faster with memory recall</span></div>
-  <div class="stat" style="--c:var(--ok)"><label>Historical Recalls</label><b id="sRec">0</b><span>Institutional queries executed</span></div>
- </div>
- <div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><div><h2>Hindsight Institutional Memory Loop</h2><p>Visualizing how historical resolutions turn into persistent operational intelligence</p></div><span class="chip">Continuous Learning Graph</span></div>
-  <div class="loop" id="loop"></div></div>
+  <div class="hero">
+    <span class="badge">⬡ HackWithHyderabad 3.0 · AI Agents That Learn Using Hindsight</span>
+    <h1 class="hero-title">Turn every production incident into <em>institutional memory.</em></h1>
+    <p class="hero-sub">When production fails, engineers shouldn't have to re-solve identical problems from scratch. HindsightOps recalls previous root causes, verified runbooks, and postmortems from persistent Hindsight memory.</p>
+    <div class="hero-ctas">
+      <button class="btn p" onclick="go('demo')">▶ Launch 60s Judge Demo</button>
+      <button class="btn ghost" onclick="openINC('INC-1042')">Investigate Target INC-1042 →</button>
+      <button class="btn ghost" onclick="go('ba')">Stateless vs Hindsight Comparison</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="g4" id="dashStats">
+    <div class="stat" style="--c:var(--rose)">
+      <div class="stat-icon">🚨</div>
+      <label>Active Outages</label><b id="sOut">1</b><span>Awaiting triage or resolution</span>
+    </div>
+    <div class="stat" style="--c:var(--cyan)">
+      <div class="stat-icon">🧠</div>
+      <label>Hindsight Memories</label><b id="sMem">28</b><span>Persistent institutional facts</span>
+    </div>
+    <div class="stat" style="--c:var(--em)">
+      <div class="stat-icon">⏱</div>
+      <label>Average MTTR</label><b>13.6m <s>↓72%</s></b><span>72% faster with memory recall</span>
+    </div>
+    <div class="stat" style="--c:var(--ac)">
+      <div class="stat-icon">⚡</div>
+      <label>Historical Recalls</label><b id="sRec">0</b><span>Institutional queries executed</span>
+    </div>
+  </div>
+
+  <!-- Memory Loop Panel -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <div>
+        <h2>Hindsight Institutional Memory Loop</h2>
+        <p class="panel-sub">Visualizing how historical resolutions turn into persistent operational intelligence</p>
+      </div>
+      <div class="pill">Continuous Learning Graph</div>
+    </div>
+    <div class="loop" id="loop"></div>
+  </div>
+
+  <!-- Live Incident Stream + Demo Card -->
+  <div class="g12" style="margin-top:14px;gap:14px">
+    <div class="panel" style="margin:0;padding:0;overflow:hidden">
+      <div class="panel-hdr" style="padding:16px 20px;border-bottom:1px solid var(--ln)">
+        <div>
+          <h2 style="font-size:15px">Live Incident Stream</h2>
+          <p class="panel-sub" style="font-size:12px">Active & historical incidents</p>
+        </div>
+        <button class="btn xs ghost" onclick="go('incidents')">View All →</button>
+      </div>
+      <table id="dashTable">
+        <thead><tr><th>ID</th><th>Service</th><th>Title</th><th>Status</th><th>Memory</th></tr></thead>
+        <tbody id="dashTbody"><tr><td colspan="5" class="loading-text">Loading from backend...</td></tr></tbody>
+      </table>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="panel" style="margin:0">
+        <div class="row" style="color:var(--ac);font:700 11px var(--mo);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">
+          ✦ Target Hackathon Demo
+        </div>
+        <h3 style="font-size:15px;font-weight:800;margin-bottom:8px">Payment API Connection Starvation</h3>
+        <p style="font-size:12px;color:var(--mu);margin-bottom:12px;line-height:1.6">Inspect how Hindsight recalls <span class="mo" style="color:var(--ac)">INC-0812</span>, recommends <span class="mo" style="color:var(--cyan)">Runbook DB-04</span>, stores the postmortem, and immediately recognizes repeated patterns.</p>
+        <div style="background:var(--bg);border:1px solid var(--ln);padding:12px;font:11px var(--mo);margin-bottom:14px">
+          <div class="row" style="justify-content:space-between;padding:3px 0"><span style="color:var(--mu)">Service:</span><span>Payment API</span></div>
+          <div class="row" style="justify-content:space-between;padding:3px 0"><span style="color:var(--mu)">Severity:</span><span style="color:var(--rose);font-weight:700">CRITICAL</span></div>
+          <div class="row" style="justify-content:space-between;padding:3px 0"><span style="color:var(--mu)">Hindsight Matches:</span><span style="color:var(--cyan);font-weight:700">3 Incidents</span></div>
+        </div>
+        <button class="btn p" style="width:100%;justify-content:center;display:flex" onclick="go('demo')">Open Interactive Demo Stepper →</button>
+      </div>
+      <div class="panel" style="margin:0;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px">🛡 Memory Loop Status</span>
+        <span style="font:700 12px var(--mo);color:var(--em)">Active & Learning</span>
+      </div>
+    </div>
+  </div>
 </section>
 
-<section class="v" id="inc"><div class="panel" style="margin:0"><h2>Incidents</h2><p>Live and historical incidents tracked by HindsightOps</p>
- <table><thead><tr><th>ID</th><th>Title</th><th>Status</th><th>MTTR</th></tr></thead><tbody id="tb"></tbody></table></div></section>
+<!-- ========================================
+     SECTION: INCIDENTS LIST
+======================================== -->
+<section class="v" id="incidents">
+  <div class="row" style="justify-content:space-between;margin-bottom:14px">
+    <div>
+      <h2 style="font-size:20px;font-weight:800">Incident Management & Historical Records</h2>
+      <p style="color:var(--mu);font-size:13px;margin-top:4px">Browse active production investigations and historical incidents retained in Hindsight memory.</p>
+    </div>
+    <div class="row">
+      <button class="btn p sm" onclick="go('new-incident')">+ New Incident</button>
+      <button class="btn-icon" id="incRefreshBtn" onclick="loadIncidentsList()" title="Refresh">↺</button>
+    </div>
+  </div>
 
-<section class="v" id="new"><div class="panel" style="margin:0"><h2>New Incident</h2><p>Describe symptoms and the agent will query Hindsight memory.</p>
- <form id="form"><label class="f">TITLE<input id="fT" required value="API timeouts on checkout"></label>
- <label class="f">SEVERITY<select id="fSev"><option>SEV-1</option><option>SEV-2</option></select></label>
- <label class="f">SYMPTOMS<textarea id="fS" rows="3">Connection pool exhausted, requests timing out after deploy</textarea></label>
- <button class="btn p" id="fBtn" style="justify-self:start">Investigate with Hindsight</button></form><div class="rc" id="rc"></div></div></section>
+  <!-- Filters -->
+  <div class="panel" style="margin:0 0 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+    <div class="search-wrap" style="flex:1;min-width:220px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="incSearch" placeholder="Search by ID, error, service..." oninput="loadIncidentsList()">
+    </div>
+    <select id="incService" onchange="loadIncidentsList()" style="width:auto">
+      <option value="">All Services</option>
+      <option>Payment API</option><option>Auth Gateway</option><option>Order Engine</option>
+      <option>User Cache</option><option>Inventory DB</option><option>Notification Service</option>
+      <option>API Gateway</option><option>Checkout Frontend</option>
+    </select>
+    <select id="incSeverity" onchange="loadIncidentsList()" style="width:auto">
+      <option value="">All Severities</option>
+      <option value="CRITICAL">Critical</option><option value="HIGH">High</option>
+      <option value="MEDIUM">Medium</option><option value="LOW">Low</option>
+    </select>
+    <select id="incStatus" onchange="loadIncidentsList()" style="width:auto">
+      <option value="">All Statuses</option>
+      <option value="INVESTIGATING">Investigating</option>
+      <option value="IDENTIFIED">Identified</option>
+      <option value="RESOLVED">Resolved</option>
+    </select>
+  </div>
 
-<section class="v" id="demo"><div class="panel" style="margin:0"><h2>Memory Learning Demo <span class="jd">JUDGES</span></h2><p>Watch the agent solve INC-0812, retain the lesson, then resolve INC-1042 using recall.</p>
- <div class="row" style="margin-top:16px"><button class="btn p" id="launch2">▶ Run 60s Demo</button></div><div id="log" class="mo" style="margin-top:18px;font-size:13px;color:var(--mu)"></div></div></section>
+  <div class="panel" style="margin:0;padding:0;overflow:hidden">
+    <table>
+      <thead><tr><th>ID</th><th>Service</th><th>Severity</th><th>Title & Error</th><th>Status</th><th>Runbook</th><th>Memory</th><th style="text-align:right">Action</th></tr></thead>
+      <tbody id="incTbody"><tr><td colspan="8" class="loading-text">Loading incidents...</td></tr></tbody>
+    </table>
+  </div>
+</section>
 
-<section class="v" id="ba"><div class="g2">
- <div class="card bad"><h3>Stateless AI</h3><ul><li>Starts from zero every incident</li><li>Generic suggestions, no context</li><li>Repeats past mistakes</li><li>Avg MTTR ≈ 48.6 min</li></ul></div>
- <div class="card good"><h3>With Hindsight</h3><ul><li>Recalls INC-0812 root cause instantly</li><li>Applies verified Runbook DB-04</li><li>Every fix is retained for next time</li><li>Avg MTTR ≈ 13.6 min (↓ 72%)</li></ul></div></div></section>
+<!-- ========================================
+     SECTION: INCIDENT DETAIL
+======================================== -->
+<section class="v" id="incident-detail">
+  <button class="btn xs ghost" id="incBackBtn" onclick="go('incidents')" style="margin-bottom:14px">← Back to Incidents</button>
 
-<section class="v" id="mem"><div class="panel" style="margin:0"><h2>Hindsight Memory</h2><p>Persistent institutional facts retained by the agent</p><div id="memList"></div></div></section>
+  <!-- Top Header -->
+  <div class="panel" style="margin:0 0 14px">
+    <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <div class="row" style="gap:8px;margin-bottom:6px;flex-wrap:wrap">
+          <span id="detIncId" class="mo" style="color:var(--ac);font-weight:700;font-size:13px">#INC-????</span>
+          <span id="detService" class="tag"></span>
+          <span id="detSeverityTag" class="tag"></span>
+          <span id="detStatusTag" class="tag"></span>
+          <span id="detMemTag" class="tag mem" style="display:none">🧠 Hindsight Memory</span>
+        </div>
+        <h2 id="detTitle" style="font-size:17px;font-weight:800"></h2>
+        <div id="detMeta" class="mo" style="font-size:11px;color:var(--mu);margin-top:6px"></div>
+      </div>
+      <div class="row" style="gap:8px">
+        <button class="btn xs ghost" id="detStatelessBtn" onclick="runAnalysis(true)">Stateless Mode</button>
+        <button class="btn p sm" id="detAnalyzeBtn" onclick="runAnalysis(false)">✦ Investigate with Hindsight</button>
+        <button class="btn em sm" id="detResolveBtn" onclick="showResolutionForm()" style="display:none">✓ Resolve Incident</button>
+        <button class="btn xs ghost" id="detPostmortemBtn" onclick="openPostmortem()" style="display:none">📄 Postmortem & Learning</button>
+      </div>
+    </div>
+    <div id="detMemSource" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--ln);font:11px var(--mo);color:var(--mu);display:none">
+      Memory Source: <span id="detMemSourceVal" style="color:var(--cyan);font-weight:700"></span>
+    </div>
+  </div>
 
-<section class="v" id="rb"><div class="g2">
- <div class="card good"><h3>DB-04 · Pool Saturation</h3><ul><li>Check active connections</li><li>Raise pool ceiling 50 → 100</li><li>Restart workers</li></ul></div>
- <div class="card"><h3>NET-11 · Latency Spike</h3><ul><li>Inspect gateway p99</li><li>Roll back last deploy</li><li>Flush CDN cache</li></ul></div></div></section>
+  <!-- 2-col layout -->
+  <div class="inc-detail-grid">
+    <!-- LEFT: Telemetry -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <!-- Error Message -->
+      <div class="panel" style="margin:0">
+        <div class="row" style="gap:6px;margin-bottom:8px"><span style="color:var(--rose)">⚠</span><span style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu)">Reported Error</span></div>
+        <div id="detError" style="background:color-mix(in srgb,var(--rose) 8%,var(--bg));border:1px solid color-mix(in srgb,var(--rose) 20%,transparent);padding:12px;font:11px/1.7 var(--mo);color:var(--rose);word-break:break-all"></div>
+        <p id="detDesc" style="margin-top:10px;font-size:12px;color:var(--mu);line-height:1.6"></p>
+      </div>
+      <!-- Log Terminal -->
+      <div class="log-terminal">
+        <div class="log-terminal-hdr">
+          <div class="row" style="gap:8px"><span style="color:var(--mu);font:12px var(--mo)">▶ Incident Logs</span></div>
+          <span style="font:10px var(--mo);color:var(--mu)">tail -n 50 stdout</span>
+        </div>
+        <pre id="detLogs" class="log-body"></pre>
+      </div>
+      <!-- Stack Trace -->
+      <div class="panel" id="detStackWrap" style="margin:0;display:none">
+        <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu);margin-bottom:8px">Stack Trace</div>
+        <pre id="detStack" style="font:10px/1.6 var(--mo);color:var(--mu);background:var(--bg);border:1px solid var(--ln);padding:12px;overflow-x:auto;white-space:pre-wrap"></pre>
+      </div>
+      <!-- Timeline -->
+      <div class="panel" style="margin:0">
+        <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu);margin-bottom:10px">⏱ Incident Timeline</div>
+        <div id="detTimeline" style="font:11px/2 var(--mo);color:var(--mu)">
+          <div><span style="color:var(--ln);margin-right:12px">T+00m</span>Incident detected via telemetry alert</div>
+        </div>
+      </div>
+    </div>
 
-<section class="v" id="set"><div class="panel" style="margin:0"><h2>Settings</h2>
- <div class="tgl"><span>Hindsight Demo Mode</span><button class="on" data-t="demo"></button></div>
- <div class="tgl"><span>Auto-recall on new incidents</span><button class="on"></button></div>
- <div class="tgl"><span>Retain outcomes automatically</span><button class="on"></button></div>
- <div class="tgl"><span>Light theme</span><button id="theme"></button></div></div></section>
+    <!-- RIGHT: AI Agent -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <!-- Analysis Results or Empty -->
+      <div id="detAnalysisArea">
+        <div class="analysis-empty panel" style="margin:0">
+          <div style="font-size:32px;margin-bottom:12px;opacity:.3">🧠</div>
+          <h4 style="font-size:14px;font-weight:700;margin-bottom:6px">Investigation Ready</h4>
+          <p style="font-size:12px;color:var(--mu);max-width:320px;margin:0 auto;line-height:1.6">Click "Investigate with Hindsight" to search persistent memory and retrieve historical solutions for this incident.</p>
+        </div>
+      </div>
+
+      <!-- Similar Incidents (Hindsight Recall) -->
+      <div id="detSimilarArea" style="display:none">
+        <div class="panel" style="margin:0">
+          <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--cyan);margin-bottom:10px">🧠 Recalled Historical Evidence (Hindsight Memory)</div>
+          <div id="detSimilarList"></div>
+        </div>
+      </div>
+
+      <!-- Resolution Form -->
+      <div id="resolutionForm" style="display:none">
+        <div class="panel" style="margin:0">
+          <div class="row" style="justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--ln);margin-bottom:14px">
+            <div><h3 style="font-size:14px;font-weight:800">✓ Resolution & Feedback Loop</h3></div>
+            <span class="mo" style="font-size:11px;color:var(--mu)">Stores Learning in Hindsight</span>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Did the AI recommendation resolve the incident?</label>
+              <div class="row" id="helpfulBtns" style="gap:8px">
+                <button class="btn xs" onclick="setHelpful('YES')" data-v="YES">YES</button>
+                <button class="btn xs" onclick="setHelpful('PARTIALLY')" data-v="PARTIALLY">PARTIALLY</button>
+                <button class="btn xs" onclick="setHelpful('NO')" data-v="NO">NO</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>Confirmed Root Cause</label>
+              <input id="resolveRootCause" value="Database connection pool exhaustion">
+            </div>
+            <div class="field">
+              <label>Actual Resolution Applied</label>
+              <textarea id="resolveResolution" rows="2">Increased pool size from 50 to 100 via Runbook DB-04 and restarted payment worker pods</textarea>
+            </div>
+            <div class="field">
+              <label>Recovery Time (minutes)</label>
+              <input type="number" id="resolveTime" value="12" style="width:120px">
+            </div>
+            <div class="row" style="justify-content:flex-end;gap:10px">
+              <button class="btn xs ghost" onclick="document.getElementById('resolutionForm').style.display='none'">Cancel</button>
+              <button class="btn em sm" id="resolveSubmitBtn" onclick="submitResolution()">✓ Mark Resolved & Retain in Hindsight</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     SECTION: NEW INCIDENT
+======================================== -->
+<section class="v" id="new-incident">
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:6px">Declare Production Incident</h2>
+  <p style="color:var(--mu);font-size:13px;margin-bottom:20px">Create an incident or select a realistic pre-configured enterprise failure scenario to test Hindsight memory recall.</p>
+
+  <!-- Presets -->
+  <div style="margin-bottom:20px">
+    <div class="row" style="gap:6px;margin-bottom:12px;font:700 11px var(--mo);text-transform:uppercase;color:var(--mu)">✦ Quick Demo Presets (1-Click Fill)</div>
+    <div class="g2">
+      <button class="preset" onclick="applyPreset(0)" style="border-top:2px solid var(--ac)">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px">
+          <span class="preset-badge" style="background:color-mix(in srgb,var(--ac) 15%,transparent);color:var(--ac)">Hackathon Demo</span>
+          <span style="font-size:16px">→</span>
+        </div>
+        <div style="font-size:13px;font-weight:700">Payment API Connection Pool Exhaustion</div>
+        <div class="mo" style="font-size:11px;color:var(--mu);margin-top:3px">Payment API • CRITICAL</div>
+      </button>
+      <button class="preset" onclick="applyPreset(1)" style="border-top:2px solid var(--cyan)">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px">
+          <span class="preset-badge" style="background:color-mix(in srgb,var(--cyan) 15%,transparent);color:var(--cyan)">Cache Failure</span>
+          <span style="font-size:16px">→</span>
+        </div>
+        <div style="font-size:13px;font-weight:700">Redis Session Cache OOM Eviction Storm</div>
+        <div class="mo" style="font-size:11px;color:var(--mu);margin-top:3px">User Cache • HIGH</div>
+      </button>
+      <button class="preset" onclick="applyPreset(2)" style="border-top:2px solid var(--amber)">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px">
+          <span class="preset-badge" style="background:color-mix(in srgb,var(--amber) 15%,transparent);color:var(--amber)">Container / K8s</span>
+          <span style="font-size:16px">→</span>
+        </div>
+        <div style="font-size:13px;font-weight:700">Kubernetes Pod CrashLoopBackOff & OOMKilled</div>
+        <div class="mo" style="font-size:11px;color:var(--mu);margin-top:3px">Order Engine • HIGH</div>
+      </button>
+      <button class="preset" onclick="applyPreset(3)" style="border-top:2px solid var(--rose)">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px">
+          <span class="preset-badge" style="background:color-mix(in srgb,var(--rose) 15%,transparent);color:var(--rose)">Ingress Timeout</span>
+          <span style="font-size:16px">→</span>
+        </div>
+        <div style="font-size:13px;font-weight:700">API Gateway 504 Timeout Cascade</div>
+        <div class="mo" style="font-size:11px;color:var(--mu);margin-top:3px">API Gateway • CRITICAL</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <form id="newIncForm" class="panel" style="margin:0" onsubmit="submitNewIncident(event)">
+    <div class="form-grid">
+      <div class="g12" style="gap:10px">
+        <div class="field">
+          <label>Incident Title *</label>
+          <input id="fTitle" required placeholder="e.g. Database Connection Pool Exhaustion on Payment API">
+        </div>
+        <div class="field">
+          <label>Affected Service *</label>
+          <select id="fService">
+            <option>Payment API</option><option>Auth Gateway</option><option>Order Engine</option>
+            <option>User Cache</option><option>Inventory DB</option><option>Notification Service</option>
+            <option>API Gateway</option><option>Checkout Frontend</option>
+          </select>
+        </div>
+      </div>
+      <div class="g3" style="gap:10px">
+        <div class="field">
+          <label>Severity *</label>
+          <select id="fSeverity" class="mo">
+            <option value="CRITICAL">CRITICAL</option><option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option><option value="LOW">LOW</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Environment</label>
+          <select id="fEnv" class="mo"><option>production</option><option>staging</option></select>
+        </div>
+        <div class="field">
+          <label>Deployment Info</label>
+          <input id="fDeploy" placeholder="e.g. Release v2.9.8 deployed 40m prior">
+        </div>
+      </div>
+      <div class="field">
+        <label>Error Message *</label>
+        <input id="fError" required placeholder="e.g. maximum database connections reached; QueuePool limit of size 50 overflow 10 reached" class="mo">
+      </div>
+      <div class="field">
+        <label>Logs / Raw Telemetry *</label>
+        <textarea id="fLogs" rows="5" required placeholder="Paste raw log lines or stack trace..." class="mo"></textarea>
+      </div>
+      <div class="field">
+        <label>User / Customer Impact</label>
+        <input id="fImpact" placeholder="e.g. 2,300 checkout attempts failed in 4 minutes">
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button type="submit" class="btn p" id="fSubmitBtn">⚡ Declare & Start AI Investigation</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<!-- ========================================
+     SECTION: MEMORY LEARNING DEMO
+======================================== -->
+<section class="v" id="demo">
+  <div class="row" style="justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+    <div>
+      <div class="badge" style="margin-bottom:10px">✦ Interactive 60-Second Judge Walkthrough</div>
+      <h2 style="font-size:20px;font-weight:800">Memory Learning Lifecycle Demo</h2>
+      <p style="color:var(--mu);font-size:13px;margin-top:4px">Watch the AI agent evolve from a generic chatbot into an experienced SRE that gets smarter with every incident.</p>
+    </div>
+    <button class="btn xs ghost" id="demoResetBtn" onclick="resetDemoStep()">↺ Reset Demo</button>
+  </div>
+
+  <!-- Stepper -->
+  <div class="panel" style="margin:0 0 14px">
+    <div class="stepper" id="demoStepper"></div>
+    <div class="row" style="justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--ln);font-size:12px">
+      <span class="mo">Step <strong id="demoStepNum">1</strong> of 10: <strong id="demoStepTitle" style="color:var(--ac)">Incident Ingress</strong></span>
+      <span class="mo" id="demoStepDesc" style="color:var(--mu)">Outage detected in Payment API</span>
+    </div>
+  </div>
+
+  <!-- Step Content Panel -->
+  <div class="panel" style="margin:0;padding:0">
+    <div class="demo-panel">
+      <div class="demo-content" id="demoContent"></div>
+      <div class="demo-footer">
+        <button class="btn xs ghost" id="demoPrevBtn" onclick="demoNav(-1)">← Previous Step</button>
+        <div class="row" style="gap:10px">
+          <span id="demoLoading" style="font:12px var(--mo);color:var(--mu);display:none">Processing...</span>
+          <button class="btn p sm" id="demoNextBtn" onclick="demoNav(1)">Next: Stateless AI Baseline →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     SECTION: BEFORE vs AFTER
+======================================== -->
+<section class="v" id="ba">
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:6px">Stateless AI vs Hindsight-Powered Incident Response</h2>
+  <p style="color:var(--mu);font-size:13px;margin-bottom:20px">Direct side-by-side comparison demonstrating why persistent institutional memory transforms SRE workflows.</p>
+
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card border-rose">
+      <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--rose);margin-bottom:10px">✗ Stateless AI (Without Memory)</div>
+      <div style="background:var(--bg);border:1px solid var(--ln);padding:12px;font:12px var(--mo);color:var(--mu);margin-bottom:14px;line-height:1.7">
+        <span style="color:var(--mu)">Analysis:</span><br>
+        <span style="color:var(--tx)">"The error indicates a database connection timeout. Check database connectivity, verify host firewall settings, and restart the database service or application server."</span>
+      </div>
+      <h4 style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu);margin-bottom:8px">Observed Limitations:</h4>
+      <ul style="list-style:none;padding:0">
+        <li style="display:flex;gap:8px;margin-bottom:8px;font-size:13px"><span style="color:var(--rose);flex-shrink:0">✗</span>Cannot cite historical incidents or previous MTTR</li>
+        <li style="display:flex;gap:8px;margin-bottom:8px;font-size:13px"><span style="color:var(--rose);flex-shrink:0">✗</span>Suggests restarting database master during a traffic surge</li>
+        <li style="display:flex;gap:8px;margin-bottom:8px;font-size:13px"><span style="color:var(--rose);flex-shrink:0">✗</span>No knowledge of internal runbooks or team postmortems</li>
+        <li style="display:flex;gap:8px;margin-bottom:8px;font-size:13px"><span style="color:var(--rose);flex-shrink:0">✗</span>Next week, the team will start from scratch again</li>
+      </ul>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--ln);font:11px var(--mo);color:var(--mu)">Triage time: ~35–45 minutes manual diagnosis</div>
+    </div>
+    <div class="card border-green" style="position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:color-mix(in srgb,var(--ok) 5%,transparent);border-radius:50%;transform:translate(30px,-30px);pointer-events:none"></div>
+      <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--em);margin-bottom:10px;display:flex;align-items:center;gap:6px">🧠 HindsightOps (With Persistent Memory)</div>
+      <div style="background:var(--bg);border:1px solid color-mix(in srgb,var(--em) 30%,transparent);padding:12px;font:12px var(--mo);color:var(--mu);margin-bottom:14px;line-height:1.7">
+        <span style="color:var(--cyan);font-weight:700">Hindsight Memory Recall:</span><br>
+        <span style="color:var(--tx)">"This incident matches INC-0812 and INC-0977 in Payment API. Historically, 3 similar connection pool saturations occurred under surge traffic. The proven fix is increasing pool size from 50 to 100 in Helm values and bouncing pods (Runbook DB-04). Average recovery time: 11-12 minutes."</span>
+      </div>
+      <h4 style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu);margin-bottom:8px">Proven Advantages:</h4>
+      <ul style="list-style:none;padding:0">
+        <li style="display:flex;gap:8px;margin-bottom:8px;font-size:13px"><span style="color:var(--em);flex-shrink:0">✓</span>Pinpoints exact root cause using verifiable prior incidents</li>
+        <li style="display:flex;gap:8px;margin-bottom:8px;font-size:13px"><span style="color:var(--em);flex-shrink:0">✓</span>Directly recommends Runbook DB-04 without risky restarts</li>
+        <li style="display:flex;gap:8px;margin-bottom:8px;font-size:13px"><span style="color:var(--em);flex-shrink:0">✓</span>Captures postmortem outcome into Hindsight upon resolution</li>
+        <li style="display:flex;gap:8px;margin-bottom:8px;font-size:13px"><span style="color:var(--em);flex-shrink:0">✓</span>Next week, the agent will recall both old and newly learned fixes</li>
+      </ul>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--ln);font:700 11px var(--mo);color:var(--em)">Triage time: ~10–12 minutes target recovery (Runbook verified)</div>
+    </div>
+  </div>
+
+  <!-- Comparison Matrix -->
+  <div class="panel" style="margin:0;padding:0;overflow:hidden">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--ln)"><h3 style="font-size:15px;font-weight:800">Capability Comparison Matrix</h3></div>
+    <div id="compMatrix">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     SECTION: HINDSIGHT MEMORY
+======================================== -->
+<section class="v" id="memory">
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:6px">🧠 Hindsight Persistent Institutional Memory</h2>
+  <p style="color:var(--mu);font-size:13px;margin-bottom:20px">Inspect what the AI agent remembers across production outages, postmortems, and engineering resolutions.</p>
+
+  <!-- Memory Bank Status -->
+  <div class="panel" style="margin:0 0 14px">
+    <div class="row" style="justify-content:space-between;padding-bottom:14px;border-bottom:1px solid var(--ln);margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--cyan);letter-spacing:.08em;margin-bottom:4px">Persistent Memory Bank</div>
+        <h3 style="font-size:16px;font-weight:700">Memory Bank: <span class="mo" style="color:var(--cyan)" id="memBankId">hindsightops-incidents</span></h3>
+        <p style="font-size:12px;color:var(--mu);margin-top:3px">Connected to endpoint: <span class="mo" style="color:var(--tx)" id="memEndpoint">https://api.hindsight.vectorize.io</span></p>
+      </div>
+      <div class="pill" id="memStatusPill"><span class="ping"><i></i></span><span id="memStatusLabel">Checking...</span></div>
+    </div>
+    <div class="g4">
+      <div style="background:var(--bg);border:1px solid var(--ln);padding:16px">
+        <div style="font:10px var(--mo);text-transform:uppercase;color:var(--mu)">Memories Retained</div>
+        <div style="font:700 28px/1.2 var(--sn);margin:6px 0 2px" id="memRetained">28</div>
+        <div style="font-size:11px;color:var(--mu)">Long-term facts stored</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--ln);padding:16px">
+        <div style="font:10px var(--mo);text-transform:uppercase;color:var(--mu)">Incidents Ingested</div>
+        <div style="font:700 28px/1.2 var(--sn);margin:6px 0 2px" id="memIngested">28</div>
+        <div style="font-size:11px;color:var(--mu)">Postmortems linked</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--ln);padding:16px">
+        <div style="font:10px var(--mo);text-transform:uppercase;color:var(--mu)">Recalls Executed</div>
+        <div style="font:700 28px/1.2 var(--sn);margin:6px 0 2px" id="memRecalls">14</div>
+        <div style="font-size:11px;color:var(--mu)">Autonomous queries</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--ln);padding:16px">
+        <div style="font:10px var(--mo);text-transform:uppercase;color:var(--mu)">Learning Loop</div>
+        <div style="font:700 22px/1.2 var(--sn);margin:6px 0 2px;color:var(--em)">Active</div>
+        <div style="font-size:11px;color:var(--mu)">Retaining new outcomes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Institutional Insights -->
+  <div class="panel" style="margin:0 0 14px">
+    <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu);margin-bottom:12px">✦ Synthesized Institutional Knowledge Learned Over Time</div>
+    <div class="g2" id="memInsights">
+      <div style="display:flex;gap:10px;background:var(--bg);border:1px solid var(--ln);padding:12px"><span style="width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-top:4px;flex-shrink:0"></span><p style="font-size:12px;line-height:1.6">DB-04 resolved 4 previous connection pool incidents in Payment API</p></div>
+      <div style="display:flex;gap:10px;background:var(--bg);border:1px solid var(--ln);padding:12px"><span style="width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-top:4px;flex-shrink:0"></span><p style="font-size:12px;line-height:1.6">Payment API frequently suffers from connection pool exhaustion under flash sale traffic</p></div>
+      <div style="display:flex;gap:10px;background:var(--bg);border:1px solid var(--ln);padding:12px"><span style="width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-top:4px;flex-shrink:0"></span><p style="font-size:12px;line-height:1.6">Redis cluster failures correlate with missing TTL on guest session tokens</p></div>
+      <div style="display:flex;gap:10px;background:var(--bg);border:1px solid var(--ln);padding:12px"><span style="width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-top:4px;flex-shrink:0"></span><p style="font-size:12px;line-height:1.6">Runbook K8S-03 successfully resolved 3 CrashLoopBackOff incidents via memory bumping</p></div>
+    </div>
+  </div>
+
+  <!-- Memory Search -->
+  <div class="panel" style="margin:0 0 14px">
+    <h3 style="font-size:15px;font-weight:800;margin-bottom:4px">🔍 Interactive Hindsight Memory Query Tester</h3>
+    <p style="font-size:12px;color:var(--mu);margin-bottom:14px">Test what Hindsight retrieves for any query string, error message, or technology stack.</p>
+    <form onsubmit="searchMemory(event)" style="display:flex;gap:8px;margin-bottom:10px">
+      <input id="memSearch" placeholder="e.g. Payment API database connection pool or Redis OOM memory" style="flex:1">
+      <button type="submit" class="btn p sm" id="memSearchBtn">Recall Memory</button>
+    </form>
+    <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <span style="font:11px var(--mo);color:var(--mu)">Quick Queries:</span>
+      <button class="btn xs ghost" onclick="quickSearch('Payment API database connection pool')">Payment API database connection pool</button>
+      <button class="btn xs ghost" onclick="quickSearch('Redis maxmemory eviction')">Redis maxmemory eviction</button>
+      <button class="btn xs ghost" onclick="quickSearch('Kubernetes pod crashloop')">Kubernetes pod crashloop</button>
+    </div>
+    <div id="memSearchResults"></div>
+  </div>
+
+  <!-- Recent Memories Table -->
+  <div class="panel" style="margin:0;padding:0;overflow:hidden">
+    <div class="panel-hdr" style="padding:14px 20px;border-bottom:1px solid var(--ln)">
+      <h3 style="font-size:15px;font-weight:700">⏱ Recent Institutional Memories</h3>
+      <span class="mo" style="font-size:11px;color:var(--mu)" id="memCount">Loading...</span>
+    </div>
+    <div id="memList"><div class="loading-text">Loading memories...</div></div>
+  </div>
+</section>
+
+<!-- ========================================
+     SECTION: RUNBOOKS
+======================================== -->
+<section class="v" id="runbooks">
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:6px">📖 Production Runbook Catalog</h2>
+  <p style="color:var(--mu);font-size:13px;margin-bottom:20px">Standardized mitigation protocols autonomously matched and cited by HindsightOps during incident investigations.</p>
+  <div class="g3" id="runbooksGrid"><div class="loading-text">Loading runbooks...</div></div>
+</section>
+
+<!-- ========================================
+     SECTION: SETTINGS
+======================================== -->
+<section class="v" id="settings">
+  <div class="row" style="justify-content:space-between;margin-bottom:20px">
+    <div>
+      <h2 style="font-size:20px;font-weight:800">System Settings & Architecture Diagnostics</h2>
+      <p style="color:var(--mu);font-size:13px;margin-top:4px">Verify Hindsight Cloud connectivity, LLM configurations, and environment security.</p>
+    </div>
+    <button class="btn-icon" onclick="loadSettings()" title="Refresh Diagnostics">↺</button>
+  </div>
+  <div class="panel" style="margin:0 0 14px">
+    <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu);margin-bottom:14px">⚙ Active Service Diagnostics</div>
+    <div class="g2" id="settingsDiag">
+      <div class="loading-text">Loading diagnostics...</div>
+    </div>
+  </div>
+  <div class="panel" style="margin:0">
+    <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu);margin-bottom:12px">🔑 Configuring Live Hindsight Cloud & Groq Credentials</div>
+    <ol style="padding-left:20px;font:12px var(--mo);line-height:2;color:var(--mu)">
+      <li>Register at <a href="https://ui.hindsight.vectorize.io" target="_blank">ui.hindsight.vectorize.io</a>.</li>
+      <li>Apply promo code <strong style="color:var(--ac)">MEMHACK99</strong> for $50 hackathon credits in billing.</li>
+      <li>Generate an API key and copy it into your <strong style="color:var(--tx)">.env</strong> file under <code style="color:var(--ac)">HINDSIGHT_API_KEY</code>.</li>
+      <li>Add your Groq API key from <a href="https://console.groq.com/keys" target="_blank">console.groq.com</a> under <code style="color:var(--ac)">GROQ_API_KEY</code>.</li>
+      <li>Restart the backend server. The health pill updates immediately to <strong style="color:var(--em)">Hindsight Cloud (Live)</strong>.</li>
+    </ol>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--ln)">
+      <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu);margin-bottom:10px">Theme Preferences</div>
+      <div class="tgl"><span style="font-size:13px">Dark Mode</span><button class="tgl-wrap on" id="themeToggle" onclick="toggleTheme()"></button></div>
+    </div>
+  </div>
+</section>
+
 </main>
+
+<!-- ====== FOOTER ====== -->
+<footer>
+  <div style="max-width:1240px;margin:0 auto;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <span>HindsightOps • Built for HackWithHyderabad 3.0</span>
+    <span>Theme: "AI Agents That Learn Using Hindsight"</span>
+    <span>Persistent Institutional Memory for SREs</span>
+  </div>
+</footer>
+
+<!-- ====== RUNBOOK MODAL ====== -->
+<div class="modal-bg" id="rbModal" style="display:none" onclick="if(event.target===this)closeRbModal()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div>
+        <span class="mo" id="rbModalId" style="color:var(--ac);font-weight:700;font-size:13px"></span>
+        <h3 id="rbModalTitle" style="font-size:16px;font-weight:800;margin-top:4px"></h3>
+      </div>
+      <button class="close-btn" onclick="closeRbModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="rbModalSummary" style="color:var(--mu);font-size:13px;margin-bottom:16px;line-height:1.6"></p>
+      <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu);margin-bottom:10px">Mitigation Steps</div>
+      <div id="rbModalSteps"></div>
+      <div class="g2" style="margin-top:16px;gap:10px">
+        <div style="background:var(--bg);border:1px solid var(--ln);padding:12px">
+          <div style="font:10px var(--mo);text-transform:uppercase;color:var(--mu)">Est. Recovery</div>
+          <div id="rbModalTime" style="font:700 18px var(--sn);margin-top:4px"></div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--ln);padding:12px">
+          <div style="font:10px var(--mo);text-transform:uppercase;color:var(--mu)">Success Rate</div>
+          <div id="rbModalRate" style="font:700 18px var(--sn);margin-top:4px;color:var(--em)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== POSTMORTEM MODAL ====== -->
+<div class="modal-bg" id="pmModal" style="display:none" onclick="if(event.target===this)closePmModal()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div>
+        <span class="mo" style="color:var(--cyan);font-size:11px;text-transform:uppercase;font-weight:700">Postmortem & Learning</span>
+        <h3 id="pmTitle" style="font-size:16px;font-weight:800;margin-top:4px"></h3>
+      </div>
+      <button class="close-btn" onclick="closePmModal()">×</button>
+    </div>
+    <div class="modal-body" id="pmBody" style="font-size:13px;line-height:1.7;color:var(--mu)">
+      Generating postmortem...
+    </div>
+    <div style="padding:16px 24px;border-top:1px solid var(--ln);display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn xs ghost" onclick="closePmModal()">Close</button>
+      <button class="btn p sm" id="pmSaveBtn" onclick="savePostmortem()">✦ Retain in Hindsight Memory</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SCRIPT ====== -->
 <script>
 (function(){
-var API_BASE = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost')
+'use strict';
+
+// ─── API BASE ───────────────────────────────────────────
+const API = (location.hostname==='127.0.0.1'||location.hostname==='localhost')
   ? '/api'
   : 'https://incident-response-agent-b268.onrender.com/api';
 
-var $=function(s){return document.querySelector(s)},V=[["dash","Dashboard"],["inc","Incidents"],["new","New Incident"],["demo","Memory Learning Demo<span class=jd>JUDGES</span>"],["ba","Before vs After"],["mem","Hindsight Memory"],["rb","Runbooks"],["set","Settings"]];
-var S={mem:[],rec:0,inc:[["INC-0812","Connection Pool Saturation","Resolved","41m"],["INC-1042","Recurring Symptoms: checkout timeouts","Active","—"]],busy:0};
-$("#nav").innerHTML=V.map(function(v){return'<button data-go="'+v[0]+'">'+v[1]+'</button>'}).join("");
-function go(id){document.querySelectorAll(".v").forEach(function(e){e.classList.toggle("on",e.id==id)});document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.go==id)});scrollTo(0,0)}
-document.addEventListener("click",function(e){var g=e.target.closest("[data-go]");if(g)go(g.dataset.go)});
-var L=[["1. Historical Incident","INC-0812","Connection Pool Saturation"],["2. Root Cause & Fix","Runbook DB-04","Pool ceiling 50 → 100"],["3. Institutional Memory","Hindsight Memory Bank","Retained lesson"],["4. New Outage (Current)","INC-1042","Recurring Symptoms"],["5. Future Resilience","INC-1099","Cumulative Knowledge"]];
-$("#loop").innerHTML=L.map(function(n){return'<div class="node"><small class="mo">'+n[0]+'</small><b>'+n[1]+'</b><span>'+n[2]+'</span></div>'}).join("");
-function render(){
- $("#sMem").textContent=S.mem.length;$("#sRec").textContent=S.rec;$("#sOut").textContent=S.inc.filter(function(i){return i[2]=="Active"}).length;
- $("#tb").innerHTML=S.inc.map(function(i){return'<tr><td class=mo>'+i[0]+'</td><td>'+i[1]+'</td><td><span class="tg '+(i[2]=="Active"?"a":"r")+'">'+i[2]+'</span></td><td class=mo>'+i[3]+'</td></tr>'}).join("");
- $("#memList").innerHTML=S.mem.length?S.mem.map(function(m){return'<div class=mem><small>'+m[0]+'</small>'+m[1]+'</div>'}).join(""):'<div class=empty>No memories yet. Run the judge demo to retain some.</div>';
-}
-function sleep(t){return new Promise(function(r){setTimeout(r,t)})}
-
-// Initial Live Backend Sync
-async function syncLiveBackend(){
+async function api(path, opts={}) {
   try {
-    const health = await fetch(API_BASE + '/health').then(r=>r.json()).catch(()=>null);
-    if(health && health.status === 'OK'){
-      $("#demoChip").innerHTML = '<i></i>Backend: Live (' + (health.hindsight === 'Connected (Live)' ? 'Hindsight Live' : 'Demo') + ')';
+    const r = await fetch(API+path, {headers:{'Content-Type':'application/json'}, ...opts});
+    if (!r.ok) {
+      const e = await r.json().catch(()=>({}));
+      throw new Error(e.detail||`HTTP ${r.status}`);
     }
-    const incData = await fetch(API_BASE + '/incidents').then(r=>r.json()).catch(()=>null);
-    if(incData && Array.isArray(incData) && incData.length > 0){
-      S.inc = incData.map(function(i){
-        return [i.id, i.title, i.status === 'RESOLVED' ? 'Resolved' : 'Active', i.resolution_time_minutes ? (i.resolution_time_minutes + 'm') : '—'];
-      });
-    }
-    const memData = await fetch(API_BASE + '/memory/recent').then(r=>r.json()).catch(()=>null);
-    if(memData && Array.isArray(memData) && memData.length > 0){
-      S.mem = memData.map(function(m){
-        return [m.document_id || m.id || 'MEM-HINDSIGHT', m.text || m.summary || m.content];
-      });
-      S.rec = Math.max(S.rec, S.mem.length);
-    }
-    render();
+    return r.json();
   } catch(e) {
-    console.log("Using local offline fallback state:", e);
+    console.warn('API error:', path, e.message);
+    throw e;
   }
 }
-syncLiveBackend();
 
-async function demo(){
- if(S.busy)return;S.busy=1;go("demo");var lg=$("#log"),nodes=document.querySelectorAll(".node");lg.innerHTML="";
- var steps=[
-   ["INC-0812 detected: Connection Pool Saturation",0],
-   ["Root cause found. Runbook DB-04 applied (pool 50 → 100)",1],
-   ["Lesson retained in Hindsight memory (live sync)",2,async function(){
-     S.mem.push(["INC-0812","Pool saturation after deploy → apply DB-04"],["DB-04","Raise pool ceiling 50 → 100, restart workers"]);
-     try {
-       await fetch(API_BASE + '/incidents/INC-0812/learn', {method:'POST'}).catch(()=>{});
-     } catch(e){}
-   }],
-   ["INC-1042 opens with similar symptoms",3],
-   ["Recalled INC-0812 (94% match) from Hindsight bank. Suggesting DB-04.",3,async function(){
-     S.rec++;
-     try {
-       await fetch(API_BASE + '/incidents/INC-1042/analyze?stateless=false', {method:'POST'}).catch(()=>{});
-     } catch(e){}
-   }],
-   ["Resolved in 4m. Institutional knowledge compounds for INC-1099.",4,async function(){
-     S.inc[1]=["INC-1042","Recurring Symptoms: checkout timeouts","Resolved","4m"];
-     S.mem.push(["INC-1042","Recurring pattern confirmed, DB-04 verified"]);
-     try {
-       await fetch(API_BASE + '/incidents/INC-1042/resolve', {
-         method:'POST',
-         headers:{'Content-Type':'application/json'},
-         body: JSON.stringify({resolution:'Applied Runbook DB-04: increased pool from 50 to 100', resolution_time_minutes:4, was_helpful:'YES'})
-       }).catch(()=>{});
-     } catch(e){}
-   }]
- ];
- for(var i=0;i<steps.length;i++){
-   var s=steps[i];nodes.forEach(function(n,k){n.classList.toggle("on",k==s[1])});
-   if(s[2])await s[2]();
-   lg.insertAdjacentHTML("beforeend","<div>› "+s[0]+"</div>");
-   render();
-   await sleep(1100);
- }
- nodes.forEach(function(n){n.classList.add("on")});S.busy=0;
+// ─── STATE ──────────────────────────────────────────────
+const S = {
+  activeTab: 'dash',
+  selectedIncId: 'INC-1042',
+  health: null,
+  incidents: [],
+  demoStep: 1,
+  demoLoading: false,
+  demoStateless: null,
+  demoMemory: null,
+  demoFollowup: null,
+  demoFollowupAnalysis: null,
+  currentIncident: null,
+  currentAnalysis: null,
+  wasHelpful: 'YES',
+  runbooks: [],
+  currentRb: null,
+  currentPm: null,
+  memStats: null,
+  memRecent: [],
+};
+
+// ─── NAV ────────────────────────────────────────────────
+const TABS = [
+  {id:'dash', label:'Dashboard'},
+  {id:'incidents', label:'Incidents'},
+  {id:'new-incident', label:'New Incident'},
+  {id:'demo', label:'Memory Learning Demo<span class="jd">JUDGES</span>'},
+  {id:'ba', label:'Before vs After'},
+  {id:'memory', label:'Hindsight Memory'},
+  {id:'runbooks', label:'Runbooks'},
+  {id:'settings', label:'Settings'},
+];
+
+document.getElementById('nav').innerHTML = TABS.map(t=>
+  `<button onclick="go('${t.id}')" data-tab="${t.id}">${t.label}</button>`
+).join('');
+
+function go(id) {
+  S.activeTab = id;
+  document.querySelectorAll('.v').forEach(e=>e.classList.toggle('on', e.id===id));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===id));
+  scrollTo(0,0);
+  // Lazy load section data
+  if(id==='incidents') loadIncidentsList();
+  if(id==='memory') loadMemory();
+  if(id==='runbooks') loadRunbooks();
+  if(id==='settings') loadSettings();
+  if(id==='demo') renderDemoStep();
+  if(id==='ba') renderCompMatrix();
 }
-$("#launch").onclick=$("#launch2").onclick=demo;
+window.go = go;
 
-$("#form").onsubmit=async function(e){
-  e.preventDefault();
-  var title=$("#fT").value.trim(), sym=$("#fS").value.trim();
-  var btn=$("#fBtn");
-  btn.textContent="Querying Hindsight Memory...";
-  btn.disabled=true;
+function openINC(id) {
+  S.selectedIncId = id;
+  go('incident-detail');
+  loadIncidentDetail(id);
+}
+window.openINC = openINC;
 
+// ─── HEALTH CHECK ───────────────────────────────────────
+async function checkHealth() {
   try {
-    // 1. Live Memory Search
-    var searchRes = await fetch(API_BASE + '/memory/search', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({query: title + ' ' + sym, top_k: 2})
-    }).then(r=>r.ok?r.json():null).catch(()=>null);
+    const h = await api('/health');
+    S.health = h;
+    const live = h.hindsight?.includes('Connected (Live)');
+    document.getElementById('healthLabel').textContent = live ? 'Hindsight Cloud Live' : 'Hindsight Demo Mode';
+    document.getElementById('healthPill').className = 'pill' + (live?'':' offline');
+    const dot = document.querySelector('#healthPill .ping i');
+    if(dot) dot.style.background = live ? 'var(--ok)' : 'var(--cyan)';
+  } catch(e) {
+    document.getElementById('healthLabel').textContent = 'Backend Offline';
+    document.getElementById('healthPill').className = 'pill offline';
+  }
+}
 
-    // 2. Create Incident Live
-    var created = await fetch(API_BASE + '/incidents', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        title: title,
-        service: 'checkout-service',
-        severity: $("#fSev").value === 'SEV-1' ? 'CRITICAL' : 'HIGH',
-        description: sym,
-        error_message: sym,
-        logs: 'Connection timeout after 30000ms\nPool exhausted: active=50, max=50'
-      })
-    }).then(r=>r.ok?r.json():null).catch(()=>null);
-
-    var id = created ? created.id : ("INC-"+(1043+S.inc.length-2));
-    S.inc.unshift([id, title, "Active", "—"]);
-    S.rec++;
-    render();
-
-    $("#rc").className="rc on";
-    if (searchRes && searchRes.memories && searchRes.memories.length > 0) {
-      var topMatch = searchRes.memories[0];
-      var score = Math.round((topMatch.similarity || 0.94) * 100);
-      $("#rc").innerHTML="<b>Live Hindsight Recall ("+score+"% match):</b> Matched historical precedent. "+(topMatch.text || "Recommended Runbook DB-04: raise pool ceiling 50 → 100, restart workers.");
-    } else {
-      var hit=/pool|connection|timeout/i.test(sym+" "+title);
-      $("#rc").innerHTML=hit
-        ?"<b>Hindsight recall:</b> matched INC-0812 (94%). Recommended Runbook DB-04: raise pool ceiling 50 → 100, restart workers."
-        :"<b>Hindsight recall:</b> No direct match found. Incident logged; resolution will be automatically retained into Hindsight memory.";
+// ─── DASHBOARD LOAD ─────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [stats, incs] = await Promise.all([
+      api('/dashboard').catch(()=>null),
+      api('/incidents').catch(()=>[])
+    ]);
+    S.incidents = incs;
+    if(stats) {
+      document.getElementById('sOut').textContent = stats.active_incidents ?? 1;
+      document.getElementById('sMem').textContent = stats.memories_retained ?? 28;
+      document.getElementById('sRec').textContent = stats.memories_recalled_total ?? 0;
     }
-  } catch(err){
-    var idFallback="INC-"+(1043+S.inc.length-2);
-    S.inc.unshift([idFallback, title, "Active", "—"]);
-    S.rec++;
-    render();
-    $("#rc").className="rc on";
-    $("#rc").innerHTML="<b>Hindsight recall:</b> matched INC-0812 (94%). Recommended Runbook DB-04: raise pool ceiling 50 → 100, restart workers.";
-  } finally {
-    btn.textContent="Investigate with Hindsight";
-    btn.disabled=false;
+    renderDashTable(incs.slice(0,6));
+  } catch(e) {
+    renderDashTable([]);
   }
-};
+}
 
-$("#reset").onclick=async function(){
+function renderDashTable(incs) {
+  const tbody = document.getElementById('dashTbody');
+  if (!incs.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">No incidents loaded yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = incs.map(i=>`
+    <tr class="row-link" onclick="openINC('${i.id}')">
+      <td class="mo" style="color:var(--ac);font-weight:700">${i.id}</td>
+      <td>${i.service}</td>
+      <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title}</td>
+      <td><span class="tag ${i.status==='RESOLVED'?'resolved':'active'}">${i.status}</span></td>
+      <td>${i.retained_in_hindsight?'<span class="tag mem">🧠 Retained</span>':'<span style="color:var(--mu)">—</span>'}</td>
+    </tr>`).join('');
+}
+
+// Memory Loop Nodes
+const LOOP_NODES = [
+  ['1. Historical Incident','INC-0812','Connection Pool Saturation'],
+  ['2. Root Cause & Fix','Runbook DB-04','Pool ceiling 50 → 100'],
+  ['3. Institutional Memory','Hindsight Memory Bank','Retained lesson'],
+  ['4. New Outage (Current)','INC-1042','Recurring Symptoms'],
+  ['5. Future Resilience','INC-1099','Cumulative Knowledge'],
+];
+document.getElementById('loop').innerHTML = LOOP_NODES.map(n=>
+  `<div class="node" onclick="go('demo')"><small>${n[0]}</small><b>${n[1]}</b><span>${n[2]}</span></div>`
+).join('');
+
+// ─── INCIDENTS LIST ─────────────────────────────────────
+async function loadIncidentsList() {
+  const params = new URLSearchParams();
+  const s=document.getElementById('incSearch')?.value;
+  const sv=document.getElementById('incService')?.value;
+  const sev=document.getElementById('incSeverity')?.value;
+  const st=document.getElementById('incStatus')?.value;
+  if(s) params.set('search',s);
+  if(sv) params.set('service',sv);
+  if(sev) params.set('severity',sev);
+  if(st) params.set('status',st);
+  const tbody = document.getElementById('incTbody');
+  tbody.innerHTML = '<tr><td colspan="8" class="loading-text">Loading...</td></tr>';
   try {
-    await fetch(API_BASE + '/demo/reset', {method:'POST'}).catch(()=>{});
-  } catch(e){}
-  S.mem=[];S.rec=0;
-  S.inc=[["INC-0812","Connection Pool Saturation","Resolved","41m"],["INC-1042","Recurring Symptoms: checkout timeouts","Active","—"]];
-  document.querySelectorAll(".node").forEach(function(n){n.classList.remove("on")});
-  $("#log").innerHTML="";$("#rc").className="rc";
-  render();
-};
+    const incs = await api('/incidents?'+params.toString());
+    S.incidents = incs;
+    if (!incs.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty">No incidents matching criteria.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = incs.map(i=>`
+      <tr class="row-link" onclick="openINC('${i.id}')">
+        <td class="mo" style="font-weight:700;color:var(--ac)">${i.id}</td>
+        <td>${i.service}</td>
+        <td><span class="tag ${sevClass(i.severity)}">${i.severity}</span></td>
+        <td style="max-width:220px">
+          <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title}</div>
+          <div class="mo" style="font-size:10px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.error_message||''}</div>
+        </td>
+        <td><span class="tag ${i.status==='RESOLVED'?'resolved':'active'}">${i.status}</span></td>
+        <td class="mo" style="font-size:11px">${i.runbook_id||'—'}</td>
+        <td>${i.retained_in_hindsight?'<span class="tag mem">🧠</span>':'<span style="color:var(--mu)">—</span>'}</td>
+        <td style="text-align:right"><span style="font:600 12px var(--sn);color:var(--ac)">Investigate →</span></td>
+      </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">Failed to load incidents.</td></tr>';
+  }
+}
+window.loadIncidentsList = loadIncidentsList;
 
-document.querySelectorAll(".tgl button").forEach(function(b){b.onclick=function(){b.classList.toggle("on");if(b.dataset.t)$("#demoChip").classList.toggle("off",!b.classList.contains("on"))}});
-$("#theme").onclick=function(){var d=document.documentElement,l=d.dataset.theme=="light";d.dataset.theme=l?"dark":"light";this.classList.toggle("on",!l)};
-render();go("dash");
+function sevClass(s) {
+  return {CRITICAL:'crit',HIGH:'high',MEDIUM:'med',LOW:'low'}[s]||'low';
+}
+
+// ─── INCIDENT DETAIL ─────────────────────────────────────
+async function loadIncidentDetail(id) {
+  S.currentAnalysis = null;
+  S.wasHelpful = 'YES';
+  document.getElementById('incident-detail').scrollIntoView();
+  document.getElementById('detTitle').textContent = 'Loading...';
+  document.getElementById('detAnalysisArea').innerHTML = `<div class="analysis-empty panel" style="margin:0"><div style="font-size:32px;margin-bottom:12px;opacity:.3">🧠</div><h4 style="font-size:14px;font-weight:700;margin-bottom:6px">Investigation Ready</h4><p style="font-size:12px;color:var(--mu);max-width:320px;margin:0 auto;line-height:1.6">Click "Investigate with Hindsight" to search persistent memory and retrieve historical solutions for this incident.</p></div>`;
+  document.getElementById('detSimilarArea').style.display = 'none';
+  document.getElementById('resolutionForm').style.display = 'none';
+  document.getElementById('detMemSource').style.display = 'none';
+  try {
+    const inc = await api('/incidents/'+id);
+    S.currentIncident = inc;
+    document.getElementById('detIncId').textContent = '#'+inc.id;
+    document.getElementById('detTitle').textContent = inc.title;
+    document.getElementById('detService').textContent = inc.service;
+    document.getElementById('detSeverityTag').className = 'tag '+sevClass(inc.severity);
+    document.getElementById('detSeverityTag').textContent = inc.severity;
+    document.getElementById('detStatusTag').className = 'tag '+(inc.status==='RESOLVED'?'resolved':'active');
+    document.getElementById('detStatusTag').textContent = inc.status;
+    document.getElementById('detMemTag').style.display = inc.retained_in_hindsight?'inline-flex':'none';
+    document.getElementById('detMeta').textContent = [
+      inc.environment?`Env: ${inc.environment}`:'',
+      inc.impact?`Impact: ${inc.impact}`:'',
+      inc.deployment_info?`Deploy: ${inc.deployment_info}`:''
+    ].filter(Boolean).join(' • ');
+    document.getElementById('detError').textContent = inc.error_message||'';
+    document.getElementById('detDesc').textContent = inc.description||'';
+    document.getElementById('detLogs').textContent = inc.logs||'No logs available.';
+    if(inc.stack_trace) {
+      document.getElementById('detStackWrap').style.display='block';
+      document.getElementById('detStack').textContent = inc.stack_trace;
+    } else {
+      document.getElementById('detStackWrap').style.display='none';
+    }
+    // Timeline
+    const tl = document.getElementById('detTimeline');
+    tl.innerHTML = `<div style="padding:3px 0"><span class="mo" style="color:var(--mu);margin-right:12px">T+00m</span>Incident detected via telemetry alert</div>`;
+    if(inc.analysis||inc.status==='IDENTIFIED') {
+      tl.innerHTML += `<div style="padding:3px 0;color:var(--ac)"><span class="mo" style="color:var(--mu);margin-right:12px">T+01m</span>Hindsight searched; historical incidents matched</div>`;
+    }
+    if(inc.status==='RESOLVED') {
+      tl.innerHTML += `<div style="padding:3px 0;color:var(--em)"><span class="mo" style="color:var(--mu);margin-right:12px">T+${inc.resolution_time_minutes||12}m</span>Engineer applied recommended fix (${inc.runbook_id||'DB-04'})</div>`;
+      tl.innerHTML += `<div style="padding:3px 0;color:var(--cyan)"><span class="mo" style="color:var(--mu);margin-right:12px">T+${inc.resolution_time_minutes||12}m</span>Resolution and institutional learning stored in Hindsight</div>`;
+    }
+    // Buttons
+    document.getElementById('detResolveBtn').style.display = inc.status!=='RESOLVED'?'inline-flex':'none';
+    document.getElementById('detPostmortemBtn').style.display = inc.status==='RESOLVED'?'inline-flex':'none';
+    // Pre-existing analysis
+    if(inc.analysis) {
+      S.currentAnalysis = inc.analysis;
+      renderAnalysis(inc.analysis);
+    }
+  } catch(e) {
+    document.getElementById('detTitle').textContent = 'Error loading incident: '+e.message;
+  }
+}
+
+async function runAnalysis(stateless) {
+  const btn = document.getElementById('detAnalyzeBtn');
+  btn.textContent = '⟳ Investigating...';
+  btn.disabled = true;
+  document.getElementById('detStatelessBtn').disabled = true;
+  try {
+    const res = await api(`/incidents/${S.selectedIncId}/analyze?stateless=${stateless}`, {method:'POST'});
+    S.currentAnalysis = res;
+    renderAnalysis(res);
+    if(!stateless) {
+      document.getElementById('sRec').textContent = (parseInt(document.getElementById('sRec').textContent)||0)+1;
+    }
+  } catch(e) {
+    alert('Analysis error: '+e.message);
+  } finally {
+    btn.textContent = '✦ Investigate with Hindsight';
+    btn.disabled = false;
+    document.getElementById('detStatelessBtn').disabled = false;
+  }
+}
+window.runAnalysis = runAnalysis;
+
+function renderAnalysis(a) {
+  const isStateless = a.is_stateless_baseline;
+  // Memory source indicator
+  document.getElementById('detMemSource').style.display = 'block';
+  document.getElementById('detMemSourceVal').textContent = a.memory_source||'';
+  document.getElementById('detMemSourceVal').style.color = isStateless?'var(--amber)':'var(--cyan)';
+
+  // Root cause
+  const hyps = (a.root_cause_hypotheses||[]);
+  const hyp = hyps[0]||{};
+  const pct = Math.round((hyp.confidence_score||0)*100);
+
+  let html = `<div class="panel" style="margin:0 0 14px">
+    <div class="row" style="justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div class="row" style="gap:6px"><span style="color:var(--ac)">⚡</span><span style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu)">Root Cause Hypothesis</span></div>
+      ${hyp.confidence?`<span class="tag rb" style="color:var(--ac)">${hyp.confidence} (${pct}%)</span>`:''}
+    </div>`;
+  hyps.forEach(h=>{
+    html += `<div style="background:var(--bg);border:1px solid var(--ln);padding:14px;margin-bottom:10px">
+      <div style="font-weight:700;margin-bottom:6px">${h.title||''}</div>
+      <p style="font-size:12px;color:var(--mu);line-height:1.6">${h.explanation||''}</p>
+      ${(h.supporting_evidence||[]).length?`<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">${(h.supporting_evidence).map(e=>`<span class="mo" style="font-size:10px;padding:2px 6px;border:1px solid var(--ln);color:var(--mu)">✓ ${e}</span>`).join('')}</div>`:''}
+    </div>`;
+  });
+  html += '</div>';
+
+  // Actions
+  const actions = a.recommended_actions||[];
+  html += `<div class="panel" style="margin:0 0 14px">
+    <div class="row" style="justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <span style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu)">🛡 Recommended Actions</span>
+      ${(a.runbooks||[]).length?`<button class="btn xs rb" onclick="openRunbook('${a.runbooks[0].runbook_id}')" style="color:var(--ac);border-color:color-mix(in srgb,var(--ac) 40%,transparent)">📖 Open ${a.runbooks[0].runbook_id}</button>`:''}
+    </div>
+    ${actions.map((act,i)=>`<div style="display:flex;gap:10px;background:var(--bg);border:1px solid var(--ln);padding:10px;margin-bottom:8px"><span class="mo" style="font-weight:700;color:var(--ac);flex-shrink:0">${i+1}.</span><p style="font-size:12px;line-height:1.6">${act.replace(/^\d+\.\s*/,'')}</p></div>`).join('')}
+    ${a.why_this_recommendation?`<div style="background:color-mix(in srgb,var(--ac) 6%,var(--pn));border:1px solid color-mix(in srgb,var(--ac) 25%,transparent);padding:12px;margin-top:8px"><div style="font:700 11px var(--mo);color:var(--ac);margin-bottom:6px">❓ Why This Recommendation?</div><p style="font-size:12px;color:var(--mu);line-height:1.6">${a.why_this_recommendation}</p></div>`:''}
+  </div>`;
+
+  // Activity Log
+  if((a.agent_activity||[]).length) {
+    html += `<div class="panel" style="margin:0 0 14px">
+      <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu);margin-bottom:10px">🤖 Agent Observability</div>
+      ${a.agent_activity.map(act=>`<div class="activity-item"><div class="activity-dot" style="background:var(--ac)"></div><div><div style="font-weight:600;font-size:12px">${act.action||''}</div><div style="font-size:11px;color:var(--mu)">${act.detail||act.result||''}</div></div></div>`).join('')}
+    </div>`;
+  }
+
+  document.getElementById('detAnalysisArea').innerHTML = html;
+
+  // Similar incidents
+  if(!isStateless && (a.historical_evidence||[]).length) {
+    const ev = a.historical_evidence;
+    document.getElementById('detSimilarArea').style.display = 'block';
+    document.getElementById('detSimilarList').innerHTML = ev.map(e=>`
+      <div class="similar-card" onclick="openINC('${e.incident_id}')">
+        <div class="row" style="justify-content:space-between">
+          <span class="mo" style="font-weight:700;color:var(--ac)">${e.incident_id}</span>
+          <span class="tag resolved">${Math.round((e.similarity_score||0)*100)}% match</span>
+        </div>
+        <div style="font-size:12px;margin-top:4px">${e.title}</div>
+        <div style="font:11px var(--mo);color:var(--em);margin-top:4px">Fix: ${e.how_it_was_resolved||''}</div>
+        <div style="font:10px var(--mo);color:var(--mu);margin-top:2px">Recovery: ${e.recovery_time||'—'}m</div>
+      </div>`).join('');
+  } else {
+    document.getElementById('detSimilarArea').style.display = 'none';
+  }
+}
+
+function showResolutionForm() {
+  document.getElementById('resolutionForm').style.display = 'block';
+  document.getElementById('resolutionForm').scrollIntoView({behavior:'smooth'});
+}
+window.showResolutionForm = showResolutionForm;
+
+function setHelpful(v) {
+  S.wasHelpful = v;
+  document.querySelectorAll('#helpfulBtns button').forEach(b=>{
+    b.className = 'btn xs '+(b.dataset.v===v?'p':'ghost');
+  });
+}
+window.setHelpful = setHelpful;
+
+async function submitResolution() {
+  const btn = document.getElementById('resolveSubmitBtn');
+  btn.textContent = '⟳ Retaining in Hindsight...';
+  btn.disabled = true;
+  try {
+    await api(`/incidents/${S.selectedIncId}/resolve`, {
+      method:'POST',
+      body: JSON.stringify({
+        actual_root_cause: document.getElementById('resolveRootCause').value,
+        actual_resolution: document.getElementById('resolveResolution').value,
+        resolution_time_minutes: parseInt(document.getElementById('resolveTime').value)||12,
+        was_recommendation_helpful: S.wasHelpful,
+        runbook_used: S.currentIncident?.runbook_id||'DB-04'
+      })
+    });
+    alert('✓ Incident marked RESOLVED and institutional learning retained in Hindsight!');
+    loadIncidentDetail(S.selectedIncId);
+    document.getElementById('resolutionForm').style.display = 'none';
+  } catch(e) {
+    alert('Resolution error: '+e.message);
+  } finally {
+    btn.textContent = '✓ Mark Resolved & Retain in Hindsight';
+    btn.disabled = false;
+  }
+}
+window.submitResolution = submitResolution;
+
+async function openPostmortem() {
+  document.getElementById('pmModal').style.display = 'flex';
+  document.getElementById('pmTitle').textContent = S.currentIncident?.title||'';
+  document.getElementById('pmBody').innerHTML = '<div class="loading-text">Generating postmortem from Hindsight memory...</div>';
+  try {
+    const pm = await api(`/incidents/${S.selectedIncId}/postmortem`, {method:'POST'});
+    S.currentPm = pm;
+    document.getElementById('pmBody').innerHTML = formatPostmortem(pm);
+  } catch(e) {
+    document.getElementById('pmBody').innerHTML = `<p style="color:var(--rose)">Error: ${e.message}</p>`;
+  }
+}
+window.openPostmortem = openPostmortem;
+
+function formatPostmortem(pm) {
+  if(!pm) return 'No postmortem data.';
+  let html = '';
+  if(pm.summary) html += `<div style="background:var(--bg);border:1px solid var(--ln);padding:14px;margin-bottom:12px"><div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu);margin-bottom:6px">Summary</div><p>${pm.summary}</p></div>`;
+  if(pm.root_cause_analysis) html += `<div style="margin-bottom:12px"><strong style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu)">Root Cause Analysis</strong><p style="margin-top:6px">${pm.root_cause_analysis}</p></div>`;
+  if(pm.what_went_well?.length) html += `<div style="margin-bottom:12px"><strong style="font:700 11px var(--mo);color:var(--em);text-transform:uppercase">✓ What Went Well</strong><ul style="margin-top:6px;padding-left:20px">${pm.what_went_well.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
+  if(pm.what_went_wrong?.length) html += `<div style="margin-bottom:12px"><strong style="font:700 11px var(--mo);color:var(--rose);text-transform:uppercase">✗ What Went Wrong</strong><ul style="margin-top:6px;padding-left:20px">${pm.what_went_wrong.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
+  if(pm.action_items?.length) html += `<div><strong style="font:700 11px var(--mo);color:var(--ac);text-transform:uppercase">Action Items</strong><ul style="margin-top:6px;padding-left:20px">${pm.action_items.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
+  return html || JSON.stringify(pm, null, 2);
+}
+
+async function savePostmortem() {
+  try {
+    await api(`/incidents/${S.selectedIncId}/learn`, {method:'POST'});
+    alert('✓ Postmortem learning retained in Hindsight memory!');
+    closePmModal();
+  } catch(e) { alert('Error: '+e.message); }
+}
+window.savePostmortem = savePostmortem;
+
+function closePmModal(){document.getElementById('pmModal').style.display='none';}
+window.closePmModal = closePmModal;
+
+// ─── NEW INCIDENT ────────────────────────────────────────
+const PRESETS = [
+  {title:'Payment API Database Connection Pool Exhaustion on Flash Sale Ingress',service:'Payment API',severity:'CRITICAL',environment:'production',error_message:'maximum database connections reached; QueuePool limit of size 50 overflow 10 reached',logs:`[2026-09-28 14:22:04.118] ERROR [payment-worker-8d2a] sqlalchemy.exc.TimeoutError: QueuePool limit of size 50 overflow 10 reached, connection timed out, timeout 30.00\n[2026-09-28 14:22:05.412] CRITICAL [payment-service] Handshake aborted on cluster pg-master-01.internal: pool acquisition timed out after 30000ms\n[2026-09-28 14:22:06.002] ERROR [checkout-gateway] HTTP 500 Internal Server Error returned to checkout client\n[2026-09-28 14:22:07.890] ALERT [PagerDuty] High Error Rate on Payment API: 42.8% of checkout requests failing`,impact:'Over 2,300 checkout attempts failed in 4 minutes across EU & US regions.',deployment_info:'Canary deployment v2.9.8 rolled out 40 minutes prior'},
+  {title:'User Cache Redis Maxmemory Eviction Cascade',service:'User Cache',severity:'HIGH',environment:'production',error_message:"OOM command not allowed when used memory > 'maxmemory'",logs:`[2026-09-28 16:15:32] ERROR redis_cluster:99 - RedisCommandException: OOM command not allowed when used memory > 'maxmemory'\n[2026-09-28 16:15:33] WARN auth_svc:50 - Cache miss fallback to PostgreSQL master overloaded auth db\n[2026-09-28 16:15:35] ALERT P99 session validation latency breached 800ms`,impact:'Login requests slowed by 450ms across Web & Mobile apps',deployment_info:'Marketing guest checkout campaign launched'},
+  {title:'Order Engine Pod CrashLoopBackOff via Memory Leak in Serialization',service:'Order Engine',severity:'HIGH',environment:'production',error_message:'CrashLoopBackOff; OOMKilled (Exit code 137)',logs:`[2026-09-28 18:40:12] INFO k8s_events: - Pod order-engine-7b58c9779f-q8n2z terminated: OOMKilled (exit code 137)\n[2026-09-28 18:40:15] WARN kubelet: - Container order-worker exceeded memory limit 1024Mi\n[2026-09-28 18:40:20] ERROR k8s_controller: - Back-off restarting failed container`,impact:'Order fulfillment delayed by 15 minutes',deployment_info:'Release v4.1.0 rolled out 45 minutes prior'},
+  {title:'API Gateway 504 Gateway Timeout Cascade on Upstream Payment Congestion',service:'API Gateway',severity:'CRITICAL',environment:'production',error_message:"HTTP 504 Gateway Time-out; circuit breaker open for upstream cluster 'payment-service'",logs:`[2026-09-28 19:30:00] ERROR envoy.access:1 - POST /v1/payments/charge 504 UT - 15002ms\n[2026-09-28 19:30:02] WARN envoy.router:2 - upstream request timeout after 15000ms`,impact:'Total checkout outage for 8 minutes',deployment_info:'No gateway changes'},
+];
+
+function applyPreset(i) {
+  const p = PRESETS[i];
+  document.getElementById('fTitle').value = p.title;
+  document.getElementById('fService').value = p.service;
+  document.getElementById('fSeverity').value = p.severity;
+  document.getElementById('fEnv').value = p.environment;
+  document.getElementById('fError').value = p.error_message;
+  document.getElementById('fLogs').value = p.logs;
+  document.getElementById('fImpact').value = p.impact;
+  document.getElementById('fDeploy').value = p.deployment_info;
+}
+window.applyPreset = applyPreset;
+
+async function submitNewIncident(e) {
+  e.preventDefault();
+  const btn = document.getElementById('fSubmitBtn');
+  btn.textContent = '⟳ Declaring Incident...';
+  btn.disabled = true;
+  try {
+    const inc = await api('/incidents', {
+      method:'POST',
+      body: JSON.stringify({
+        title: document.getElementById('fTitle').value,
+        service: document.getElementById('fService').value,
+        severity: document.getElementById('fSeverity').value,
+        environment: document.getElementById('fEnv').value,
+        error_message: document.getElementById('fError').value,
+        logs: document.getElementById('fLogs').value,
+        impact: document.getElementById('fImpact').value,
+        deployment_info: document.getElementById('fDeploy').value,
+        description: document.getElementById('fTitle').value,
+      })
+    });
+    openINC(inc.id);
+  } catch(e2) {
+    alert('Error creating incident: '+e2.message);
+  } finally {
+    btn.textContent = '⚡ Declare & Start AI Investigation';
+    btn.disabled = false;
+  }
+}
+window.submitNewIncident = submitNewIncident;
+
+// ─── DEMO STEPPER ────────────────────────────────────────
+const DEMO_STEPS = [
+  {title:'Incident Ingress',desc:'Outage detected in Payment API'},
+  {title:'Stateless AI Baseline',desc:'Analyzing with Zero Memory'},
+  {title:'Generic Advice Pitfall',desc:'Risky generic recommendation'},
+  {title:'Activate Hindsight Memory',desc:'Querying persistent bank'},
+  {title:'Multi-Incident Recall',desc:'INC-0812, INC-0921 matched'},
+  {title:'Institutional Fix Applied',desc:'Runbook DB-04 (12m MTTR)'},
+  {title:'Resolution & Learning',desc:'Capture outcome in Hindsight'},
+  {title:'Trigger Follow-up Incident',desc:'INC-1099 during flash sale'},
+  {title:'Cumulative Memory Recall',desc:'Agent recalls both old & new'},
+  {title:'The Hindsight Payoff',desc:'Permanent institutional intelligence'},
+];
+
+function renderDemoStep() {
+  const s = S.demoStep;
+  // Stepper dots
+  const stpr = document.getElementById('demoStepper');
+  stpr.innerHTML = DEMO_STEPS.map((st,i)=>{
+    const n=i+1,done=n<s,cur=n===s;
+    const cls = done?'done':cur?'current':'future';
+    const line = i<9?`<div class="step-line ${done?'done':'future'}"></div>`:'';
+    return `<div class="step-dot ${cls}" onclick="if(!S.demoLoading){S.demoStep=${n};renderDemoStep()}" title="${st.title}">${done?'✓':n}</div>${line}`;
+  }).join('');
+  document.getElementById('demoStepNum').textContent = s;
+  document.getElementById('demoStepTitle').textContent = DEMO_STEPS[s-1].title;
+  document.getElementById('demoStepDesc').textContent = DEMO_STEPS[s-1].desc;
+  document.getElementById('demoPrevBtn').disabled = s===1||S.demoLoading;
+  document.getElementById('demoNextBtn').disabled = s===10||S.demoLoading;
+  document.getElementById('demoNextBtn').textContent = s<10 ? `Next: ${DEMO_STEPS[s].title} →` : 'Explore Investigation Studio';
+  // Highlight loop node
+  document.querySelectorAll('.loop .node').forEach((n,i)=>{
+    n.classList.toggle('on', i<Math.ceil(s/2));
+  });
+  renderDemoContent(s);
+}
+
+function renderDemoContent(s) {
+  const el = document.getElementById('demoContent');
+  if(s===1) {
+    el.innerHTML = `<div class="row" style="gap:6px;color:var(--rose);font:700 11px var(--mo);text-transform:uppercase;margin-bottom:10px">⚠ Step 1: Production Incident Ingress</div>
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:14px">NovaCloud Payment API is failing under peak checkout load.</h2>
+    <div style="background:var(--bg);border:1px solid var(--ln);padding:14px;font:12px var(--mo);line-height:2">
+      <div><span style="color:var(--mu)">Target Incident:</span> <strong style="color:var(--ac)">INC-1042</strong></div>
+      <div><span style="color:var(--mu)">Service:</span> Payment API (production)</div>
+      <div><span style="color:var(--mu)">Reported Error:</span> <span style="color:var(--rose)">maximum database connections reached; QueuePool limit of size 50 overflow 10 reached</span></div>
+      <div><span style="color:var(--mu)">Symptom:</span> 42% of customer checkout attempts are throwing HTTP 500</div>
+    </div>
+    <p style="font-size:13px;color:var(--mu);margin-top:12px;line-height:1.6">First, let's observe how a traditional <strong style="color:var(--tx)">stateless AI chatbot</strong> responds with zero access to historical memory.</p>`;
+  } else if(s===2||s===3) {
+    el.innerHTML = `<div class="row" style="gap:6px;color:var(--amber);font:700 11px var(--mo);text-transform:uppercase;margin-bottom:10px">⚡ ${s===2?'Step 2: Stateless AI Response':'Step 3: Why Generic AI Fails in Production'}</div>
+    <h2 style="font-size:18px;font-weight:800;margin-bottom:12px">${s===2?'Stateless AI Baseline (Zero Memory)':'The Danger of Textbook Guesswork'}</h2>
+    <div style="background:color-mix(in srgb,var(--amber) 8%,var(--bg));border:1px solid color-mix(in srgb,var(--amber) 25%,transparent);padding:14px;margin-bottom:14px;font:12px var(--mo)">
+      <div style="font-weight:700;color:var(--amber);margin-bottom:6px">Generic AI Output:</div>
+      <p style="color:var(--tx);line-height:1.7;font-family:var(--sn)">"The error indicates a database connection timeout. Check database connectivity, verify host firewall settings, and restart the database service or application server."</p>
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--ln);padding:14px">
+      <h4 style="font:700 11px var(--mo);text-transform:uppercase;color:var(--mu);margin-bottom:10px">Production Drawbacks of Stateless AI:</h4>
+      <ul style="list-style:none;padding:0">
+        <li style="display:flex;gap:8px;margin-bottom:8px;font-size:13px"><span style="color:var(--rose);flex-shrink:0">✗</span><span><strong style="color:var(--rose)">Dangerous suggestion:</strong> Restarting the primary database during a surge causes cluster failover and cascade outages!</span></li>
+        <li style="display:flex;gap:8px;margin-bottom:8px;font-size:13px"><span style="color:var(--mu);flex-shrink:0">✗</span>Doesn't know the engineering team uses Runbook DB-04.</li>
+        <li style="display:flex;gap:8px;font-size:13px"><span style="color:var(--mu);flex-shrink:0">✗</span>Blind to history: payment API solved this exact problem in INC-0812 by scaling pool size from 50 to 100.</li>
+      </ul>
+    </div>`;
+  } else if(s===4||s===5) {
+    el.innerHTML = `<div class="row" style="gap:6px;color:var(--cyan);font:700 11px var(--mo);text-transform:uppercase;margin-bottom:10px">🧠 ${s===4?'Step 4: Querying Hindsight Memory Bank':'Step 5: Multi-Incident Recall & High-Confidence Diagnosis'}</div>
+    <h2 style="font-size:18px;font-weight:800;margin-bottom:14px">Hindsight Recalls 3 Similar Production Incidents</h2>
+    <div class="g3" style="margin-bottom:14px">
+      <div style="background:var(--bg);border:1px solid color-mix(in srgb,var(--cyan) 30%,transparent);padding:12px;font:11px var(--mo)">
+        <div style="color:var(--ac);font-weight:700;margin-bottom:4px">INC-0812 (94% Match)</div>
+        <div style="color:var(--mu)">Connection pool exhaustion under surge</div>
+        <div style="color:var(--em);font-weight:700;margin-top:6px">Fix: Bumped pool 50 to 100</div>
+        <div style="color:var(--mu);font-size:10px;margin-top:2px">Recovery: 12 min</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--ln);padding:12px;font:11px var(--mo)">
+        <div style="color:var(--ac);font-weight:700;margin-bottom:4px">INC-0921 (82% Match)</div>
+        <div style="color:var(--mu)">Connection leak in webhook handler</div>
+        <div style="color:var(--em);margin-top:6px">Fix: Restarted pods & patched session</div>
+        <div style="color:var(--mu);font-size:10px;margin-top:2px">Recovery: 18 min</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--ln);padding:12px;font:11px var(--mo)">
+        <div style="color:var(--ac);font-weight:700;margin-bottom:4px">INC-0977 (79% Match)</div>
+        <div style="color:var(--mu)">Stale TCP socket starvation on failover</div>
+        <div style="color:var(--em);margin-top:6px">Fix: Configured pool_recycle=300</div>
+        <div style="color:var(--mu);font-size:10px;margin-top:2px">Recovery: 10 min</div>
+      </div>
+    </div>
+    <div style="background:color-mix(in srgb,var(--ac) 6%,var(--pn));border:1px solid color-mix(in srgb,var(--ac) 25%,transparent);padding:14px;font-size:13px">
+      <span style="font-weight:700;color:var(--ac)">HindsightOps Reasoning: </span>
+      <span>"This incident resembles INC-0812 and INC-0977. Based on historical institutional evidence, the most likely cause is connection pool exhaustion under surge. Follow Runbook DB-04 step 1 to scale pool size from 50 to 100."</span>
+    </div>`;
+    if(S.demoMemory&&s===5) {
+      // If we have live memory analysis, show it
+    }
+  } else if(s===6||s===7) {
+    el.innerHTML = `<div class="row" style="gap:6px;color:var(--em);font:700 11px var(--mo);text-transform:uppercase;margin-bottom:10px">✓ ${s===6?'Step 6: Verified Mitigation Applied':'Step 7: Retaining New Learning in Hindsight'}</div>
+    <h2 style="font-size:18px;font-weight:800;margin-bottom:12px">${s===6?'Mitigation Applied in 12 Minutes':'Closing the Institutional Feedback Loop'}</h2>
+    <div style="background:color-mix(in srgb,var(--em) 8%,var(--bg));border:1px solid color-mix(in srgb,var(--em) 25%,transparent);padding:14px;margin-bottom:14px">
+      <div class="row" style="gap:8px;color:var(--em);font-weight:700;margin-bottom:8px">✓ INC-1042 RESOLVED & VERIFIED IN PRODUCTION</div>
+      <p style="font-size:13px;line-height:1.7">Engineer increased <code style="background:var(--bg);padding:1px 5px">DB_POOL_SIZE=100</code> in Helm values and bounced worker pods per Runbook DB-04. Active connection queue drained, P99 latency returned to 110ms.</p>
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--ln);padding:14px;font:11px var(--mo)">
+      <div style="color:var(--cyan);font-weight:700;margin-bottom:6px">🧠 Hindsight Memory Bank Retain Call:</div>
+      <pre style="color:var(--mu);font-size:11px;line-height:1.7;white-space:pre-wrap">client.retain(bank_id="hindsightops-incidents", content="INC-1042: Payment API connection pool exhaustion confirmed and resolved by scaling pool to 100...")</pre>
+    </div>`;
+  } else if(s===8||s===9) {
+    el.innerHTML = `<div class="row" style="gap:6px;color:var(--ac);font:700 11px var(--mo);text-transform:uppercase;margin-bottom:10px">✦ ${s===8?'Step 8: A New Outage Occurs (INC-1099)':'Step 9: Demonstrating Cumulative Memory Learning'}</div>
+    <h2 style="font-size:18px;font-weight:800;margin-bottom:14px">${s===8?'Triggering Follow-Up Incident INC-1099':'Agent Recalls Both Prior History AND Newly Saved INC-1042!'}</h2>
+    <div style="background:var(--bg);border:1px solid var(--ln);padding:14px;font:12px var(--mo);margin-bottom:14px;line-height:2">
+      <div><span style="color:var(--mu)">New Incident:</span> <strong style="color:var(--ac)">INC-1099</strong></div>
+      <div><span style="color:var(--mu)">Service:</span> Payment API</div>
+      <div><span style="color:var(--mu)">Symptoms:</span> Connection acquisition latency spiked to 28,500ms under high concurrency</div>
+    </div>
+    <div style="background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 8%,var(--pn)),color-mix(in srgb,var(--cyan) 8%,var(--pn)));border:1px solid color-mix(in srgb,var(--ac) 30%,transparent);padding:14px">
+      <div style="font:700 12px var(--mo);color:var(--cyan);margin-bottom:8px">⚡ Recalled Institutional Context in INC-1099:</div>
+      <p style="font-size:13px;line-height:1.6">"This incident matches <strong style="color:var(--cyan)">INC-1042</strong> (resolved earlier) and historical <strong style="color:var(--ac)">INC-0812</strong>. In INC-1042, the team verified that connection pool limits saturated during promotional spikes. Apply Runbook DB-04 immediately."</p>
+    </div>`;
+  } else if(s===10) {
+    el.innerHTML = `<div class="row" style="gap:6px;color:var(--cyan);font:700 11px var(--mo);text-transform:uppercase;margin-bottom:10px">✦ Step 10: Hackathon Final Demonstration Payoff</div>
+    <h2 style="font-size:22px;font-weight:800;margin-bottom:16px">The Agent Got Smarter as It Remembered More Incidents.</h2>
+    <div class="g2" style="margin-bottom:16px">
+      <div style="background:var(--bg);border:1px solid color-mix(in srgb,var(--rose) 25%,transparent);padding:14px">
+        <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--rose);margin-bottom:8px">WITHOUT HINDSIGHT</div>
+        <p style="font-size:12px;color:var(--mu);line-height:1.6">"Check database connectivity and restart the service."</p>
+        <div style="font:10px var(--mo);color:var(--mu);margin-top:8px">• High blast radius • Zero institutional memory • Repeated investigation overhead</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid color-mix(in srgb,var(--em) 25%,transparent);padding:14px">
+        <div style="font:700 11px var(--mo);text-transform:uppercase;color:var(--em);margin-bottom:8px">WITH HINDSIGHT MEMORY</div>
+        <p style="font-size:12px;line-height:1.6">"Recalled INC-0812, INC-0977, and newly resolved INC-1042. SREs applied Runbook DB-04 to scale pool ceiling. MTTR reduced from 45m to 12m."</p>
+        <div style="font:700 10px var(--mo);color:var(--cyan);margin-top:8px">✓ Persistent memory ✓ Zero guesswork ✓ Verified runbooks ✓ Postmortems retained</div>
+      </div>
+    </div>
+    <div style="background:color-mix(in srgb,var(--ac) 6%,var(--pn));border:1px solid color-mix(in srgb,var(--ac) 25%,transparent);padding:16px;text-align:center">
+      <p style="font:700 14px var(--mo);color:var(--ac)">"HindsightOps doesn't just answer incidents. It remembers them."</p>
+    </div>`;
+  }
+}
+
+async function demoNav(dir) {
+  const nextStep = S.demoStep + dir;
+  if(nextStep < 1 || nextStep > 10) {
+    if(nextStep > 10) { openINC('INC-1042'); return; }
+    return;
+  }
+  // Fire side effects on forward nav
+  if(dir===1) await demoSideEffect(S.demoStep);
+  S.demoStep = nextStep;
+  renderDemoStep();
+}
+window.demoNav = demoNav;
+
+async function demoSideEffect(fromStep) {
+  if(S.demoLoading) return;
+  S.demoLoading = true;
+  document.getElementById('demoLoading').style.display = 'inline';
+  document.getElementById('demoNextBtn').disabled = true;
+  try {
+    if(fromStep===1 && !S.demoStateless) {
+      S.demoStateless = await api('/incidents/INC-1042/analyze?stateless=true', {method:'POST'}).catch(()=>null);
+    } else if(fromStep===4 && !S.demoMemory) {
+      S.demoMemory = await api('/incidents/INC-1042/analyze?stateless=false', {method:'POST'}).catch(()=>null);
+    } else if(fromStep===6) {
+      await api('/incidents/INC-1042/resolve', {method:'POST', body:JSON.stringify({actual_root_cause:'Database connection pool exhaustion',actual_resolution:'Increased pool size from 50 to 100 via Runbook DB-04 and restarted payment worker pods',resolution_time_minutes:12,was_recommendation_helpful:'YES',runbook_used:'DB-04'})}).catch(()=>{});
+    } else if(fromStep===7 && !S.demoFollowup) {
+      const t = await api('/demo/trigger-followup', {method:'POST'}).catch(()=>null);
+      if(t) S.demoFollowup = t.incident;
+    } else if(fromStep===8 && !S.demoFollowupAnalysis) {
+      S.demoFollowupAnalysis = await api('/incidents/INC-1099/analyze?stateless=false', {method:'POST'}).catch(()=>null);
+    }
+  } finally {
+    S.demoLoading = false;
+    document.getElementById('demoLoading').style.display = 'none';
+    document.getElementById('demoNextBtn').disabled = false;
+  }
+}
+
+async function resetDemoStep() {
+  S.demoLoading = true;
+  await api('/demo/reset', {method:'POST'}).catch(()=>{});
+  S.demoStep = 1; S.demoStateless = null; S.demoMemory = null; S.demoFollowup = null; S.demoFollowupAnalysis = null;
+  S.demoLoading = false;
+  document.querySelectorAll('.loop .node').forEach(n=>n.classList.remove('on'));
+  renderDemoStep();
+}
+window.resetDemoStep = resetDemoStep;
+
+// ─── COMPARISON MATRIX ───────────────────────────────────
+function renderCompMatrix() {
+  const items = [
+    {feature:'Historical Incident Awareness',stateless:'Zero awareness of past outages in this infrastructure',hindsight:'Recalls INC-0812, INC-0921, and INC-0977 in Payment API'},
+    {feature:'Recommended Investigation',stateless:'Suggests restarting primary database (Dangerous production antipattern)',hindsight:'Recommends checking active connections & scaling pool ceiling per Runbook DB-04'},
+    {feature:'Runbook Grounding',stateless:'Generic theoretical advice without company runbooks',hindsight:'Exact match with Runbook DB-04 (Database Connection Pool Issues)'},
+    {feature:'Expected MTTR Recovery',stateless:'35–45 minutes of manual engineering triage and trial-and-error',hindsight:'10–12 minutes based on proven historical resolution history'},
+    {feature:'Future Institutional Learning',stateless:'Stateless: forgotten immediately after conversation session ends',hindsight:'Persistent: resolution & postmortem retained in Hindsight for future incidents'},
+  ];
+  document.getElementById('compMatrix').innerHTML = items.map(c=>`
+    <div style="padding:14px 20px;border-bottom:1px solid var(--ln);display:grid;grid-template-columns:1fr 1.4fr 1.4fr;gap:12px;font-size:13px">
+      <div style="font-weight:600">${c.feature}</div>
+      <div><span style="font:10px var(--mo);text-transform:uppercase;color:var(--rose);display:block;margin-bottom:3px">Stateless AI:</span><span style="color:var(--mu)">${c.stateless}</span></div>
+      <div><span style="font:10px var(--mo);text-transform:uppercase;color:var(--em);display:block;margin-bottom:3px">HindsightOps:</span><span style="font-weight:500">${c.hindsight}</span></div>
+    </div>`).join('');
+}
+
+// ─── MEMORY EXPLORER ─────────────────────────────────────
+async function loadMemory() {
+  try {
+    const [stats, recent] = await Promise.all([
+      api('/memory/stats').catch(()=>null),
+      api('/memory/recent').catch(()=>[])
+    ]);
+    S.memStats = stats;
+    S.memRecent = recent;
+    if(stats) {
+      document.getElementById('memBankId').textContent = stats.bank_id||'hindsightops-incidents';
+      document.getElementById('memEndpoint').textContent = stats.base_url||'https://api.hindsight.vectorize.io';
+      document.getElementById('memRetained').textContent = stats.total_memories_retained||28;
+      document.getElementById('memIngested').textContent = stats.incidents_retained_count||28;
+      document.getElementById('memRecalls').textContent = stats.total_recalls_executed||14;
+      const live = stats.is_hindsight_live;
+      document.getElementById('memStatusLabel').textContent = live?'Hindsight Cloud Live':'Hindsight Demo Mode';
+      const dot = document.querySelector('#memStatusPill .ping i');
+      if(dot) dot.style.background = live?'var(--ok)':'var(--cyan)';
+      if(stats.memory_insights?.length) {
+        document.getElementById('memInsights').innerHTML = stats.memory_insights.map(ins=>
+          `<div style="display:flex;gap:10px;background:var(--bg);border:1px solid var(--ln);padding:12px"><span style="width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-top:4px;flex-shrink:0"></span><p style="font-size:12px;line-height:1.6">${ins}</p></div>`
+        ).join('');
+      }
+    }
+    renderMemList(recent);
+  } catch(e) {
+    document.getElementById('memList').innerHTML = '<div class="empty">Failed to load memories.</div>';
+  }
+}
+
+function renderMemList(mems) {
+  document.getElementById('memCount').textContent = mems.length+' Stored Units';
+  if(!mems.length) {
+    document.getElementById('memList').innerHTML = '<div class="empty">No memories retained yet. Run the Judge Demo to retain some.</div>';
+    return;
+  }
+  document.getElementById('memList').innerHTML = mems.map(m=>`
+    <div class="row-link" style="padding:14px 20px;border-bottom:1px solid var(--ln);display:flex;gap:12px;align-items:center;cursor:pointer" onclick="openINC('${m.incident_id}')">
+      <div style="flex:1;min-width:0">
+        <div class="row" style="gap:8px;margin-bottom:4px;flex-wrap:wrap">
+          <span class="mo" style="font-weight:700;color:var(--ac)">${m.incident_id}</span>
+          <span class="tag" style="color:var(--mu)">${m.service}</span>
+          ${m.runbook?`<span class="tag rb">Runbook ${m.runbook}</span>`:''}
+        </div>
+        <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Root Cause: ${m.root_cause||m.title||'—'}</div>
+        <div style="font-size:11px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">Resolution: ${m.resolution||'—'}</div>
+      </div>
+      <div class="mo" style="font-size:11px;color:var(--mu);flex-shrink:0">${m.recovery_time?m.recovery_time+'m recovery':'Resolved'} →</div>
+    </div>`).join('');
+}
+
+async function searchMemory(e) {
+  e.preventDefault();
+  const q = document.getElementById('memSearch').value.trim();
+  if(!q) return;
+  quickSearch(q);
+}
+window.searchMemory = searchMemory;
+
+async function quickSearch(q) {
+  document.getElementById('memSearch').value = q;
+  document.getElementById('memSearchBtn').textContent = 'Querying...';
+  document.getElementById('memSearchBtn').disabled = true;
+  const res = document.getElementById('memSearchResults');
+  res.innerHTML = '<div class="loading-text">Searching Hindsight memory...</div>';
+  try {
+    const results = await api('/memory/search', {method:'POST', body:JSON.stringify({query:q, top_k:5})});
+    if(!results?.length) {
+      res.innerHTML = '<div class="empty">No memories matched this query.</div>';
+    } else {
+      res.innerHTML = `<div style="font:700 12px var(--mo);color:var(--cyan);text-transform:uppercase;margin:8px 0">${results.length} Recalled Memory Units:</div>`+
+        results.map((r,i)=>`<div style="background:var(--bg);border:1px solid var(--ln);padding:12px;margin-bottom:8px;font:11px var(--mo)">
+          <div class="row" style="justify-content:space-between;margin-bottom:4px">
+            <span style="color:var(--ac);font-weight:700">${r.title||r.document_id||'Memory #'+(i+1)}</span>
+            <span style="color:var(--em);font-weight:700">Relevance: ${Math.round((r.score||r.similarity||0)*100)}%</span>
+          </div>
+          <pre style="white-space:pre-wrap;font-family:var(--sn);font-size:12px;line-height:1.6;color:var(--mu)">${r.content||r.text||''}</pre>
+        </div>`).join('');
+    }
+  } catch(e) {
+    res.innerHTML = `<div class="empty" style="color:var(--rose)">Search error: ${e.message}</div>`;
+  } finally {
+    document.getElementById('memSearchBtn').textContent = 'Recall Memory';
+    document.getElementById('memSearchBtn').disabled = false;
+  }
+}
+window.quickSearch = quickSearch;
+
+// ─── RUNBOOKS ────────────────────────────────────────────
+async function loadRunbooks() {
+  const grid = document.getElementById('runbooksGrid');
+  try {
+    const rbs = await api('/runbooks');
+    S.runbooks = rbs;
+    if(!rbs.length) { grid.innerHTML = '<div class="empty">No runbooks found.</div>'; return; }
+    grid.innerHTML = rbs.map(rb=>`
+      <div class="card border-ac" style="cursor:pointer;transition:transform .1s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''" onclick="openRunbook('${rb.id}')">
+        <div class="row" style="justify-content:space-between;margin-bottom:8px">
+          <span class="tag rb">${rb.id}</span>
+          <span class="mo" style="font-size:11px;color:var(--mu)">⏱ ${rb.estimated_recovery_time||'—'}</span>
+        </div>
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:6px">${rb.title}</h3>
+        <p style="font-size:12px;color:var(--mu);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${rb.summary||''}</p>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--ln);display:flex;justify-content:space-between;align-items:center">
+          <span class="mo" style="font-size:10px;color:var(--mu)">${(rb.service_types||[]).slice(0,2).join(', ')}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--ac)">View Protocol →</span>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    grid.innerHTML = '<div class="empty">Failed to load runbooks.</div>';
+  }
+}
+
+async function openRunbook(id) {
+  document.getElementById('rbModal').style.display = 'flex';
+  document.getElementById('rbModalId').textContent = id;
+  document.getElementById('rbModalTitle').textContent = 'Loading...';
+  document.getElementById('rbModalSteps').innerHTML = '<div class="loading-text">Loading runbook...</div>';
+  try {
+    const rb = await api('/runbooks/'+id);
+    S.currentRb = rb;
+    document.getElementById('rbModalTitle').textContent = rb.title||'';
+    document.getElementById('rbModalSummary').textContent = rb.summary||'';
+    document.getElementById('rbModalTime').textContent = rb.estimated_recovery_time||'—';
+    document.getElementById('rbModalRate').textContent = rb.success_rate||'95%';
+    document.getElementById('rbModalSteps').innerHTML = (rb.steps||[]).map((st,i)=>`
+      <div class="rb-step">
+        <div class="rb-num">${i+1}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px">${st.step||st.action||st}</div>
+          ${st.detail?`<div style="font-size:12px;color:var(--mu);margin-top:3px">${st.detail}</div>`:''}
+        </div>
+      </div>`).join('')||'<div class="empty">No steps defined.</div>';
+  } catch(e) {
+    document.getElementById('rbModalTitle').textContent = 'Error: '+e.message;
+  }
+}
+window.openRunbook = openRunbook;
+
+function closeRbModal(){document.getElementById('rbModal').style.display='none';}
+window.closeRbModal = closeRbModal;
+
+// ─── SETTINGS ────────────────────────────────────────────
+async function loadSettings() {
+  const diag = document.getElementById('settingsDiag');
+  diag.innerHTML = '<div class="loading-text">Loading diagnostics...</div>';
+  try {
+    const h = await api('/health');
+    const live = s=>s?.includes('Connected (Live)');
+    const badge = (s,live)=>`<span class="tag" style="color:${live?'var(--em)':'var(--cyan)'}">${s||'—'}</span>`;
+    diag.innerHTML = `
+      <div style="background:var(--bg);border:1px solid var(--ln);padding:14px">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="mo" style="font-weight:700;color:var(--mu);text-transform:uppercase">Hindsight Memory</span>${badge(h.hindsight, live(h.hindsight))}</div>
+        <div class="mo" style="font-size:11px;color:var(--mu)">Bank ID: <span style="color:var(--cyan)">${h.hindsight_bank_id||'—'}</span></div>
+        <div class="mo" style="font-size:10px;color:var(--mu);overflow:hidden;text-overflow:ellipsis">Endpoint: ${h.hindsight_base_url||'—'}</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--ln);padding:14px">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="mo" style="font-weight:700;color:var(--mu);text-transform:uppercase">LLM Provider</span>${badge(h.llm, live(h.llm))}</div>
+        <div class="mo" style="font-size:11px;color:var(--mu)">Model: <span style="color:var(--ac)">${h.llm_model||'—'}</span></div>
+        <div class="mo" style="font-size:10px;color:var(--mu)">Recommended: openai/gpt-oss-120b, qwen/qwen3-32b</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--ln);padding:14px">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="mo" style="font-weight:700;color:var(--mu);text-transform:uppercase">Local Database</span><span class="tag" style="color:var(--em)">${h.database||'Connected'}</span></div>
+        <div class="mo" style="font-size:11px;color:var(--mu)">Engine: SQLite (PostgreSQL Ready via SQLAlchemy)</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--ln);padding:14px">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="mo" style="font-weight:700;color:var(--mu);text-transform:uppercase">Operating Mode</span><span class="tag" style="color:var(--ac)">${h.is_demo_mode?'Demo Mode':'Live Production Mode'}</span></div>
+        <div class="mo" style="font-size:11px;color:var(--mu)">Failsafe: Offline synthetic store active when API keys empty</div>
+      </div>`;
+  } catch(e) {
+    diag.innerHTML = `<div class="empty" style="color:var(--rose)">Failed to load diagnostics: ${e.message}</div>`;
+  }
+}
+window.loadSettings = loadSettings;
+
+// ─── RESET DEMO ─────────────────────────────────────────
+async function resetDemo() {
+  if(!confirm('Reset demo state? This will reseed historical incidents and prepare INC-1042 for investigation.')) return;
+  document.getElementById('resetBtn').textContent = '⟳ Resetting...';
+  try {
+    await api('/demo/reset', {method:'POST'});
+    S.demoStep = 1; S.demoStateless = null; S.demoMemory = null;
+    document.querySelectorAll('.loop .node').forEach(n=>n.classList.remove('on'));
+    await loadDashboard();
+  } catch(e) { alert('Reset error: '+e.message); }
+  finally { document.getElementById('resetBtn').textContent = '↺ Reset Demo'; }
+}
+window.resetDemo = resetDemo;
+
+// ─── THEME ──────────────────────────────────────────────
+function toggleTheme() {
+  const d = document.documentElement;
+  const isDark = d.dataset.theme !== 'light';
+  d.dataset.theme = isDark ? 'light' : 'dark';
+  const btn = document.getElementById('themeToggle');
+  if(btn) btn.classList.toggle('on', !isDark);
+}
+window.toggleTheme = toggleTheme;
+
+// ─── INIT ────────────────────────────────────────────────
+function init() {
+  checkHealth();
+  loadDashboard();
+  renderDemoStep();
+  renderCompMatrix();
+  // Handle URL hash for direct deep-links
+  const hash = location.hash.replace('#','');
+  if(hash && document.getElementById(hash)) go(hash);
+}
+
+init();
+
 })();
-</script></body></html>
+</script>
+</body>
+</html>
