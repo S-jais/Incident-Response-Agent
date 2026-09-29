@@ -46,7 +46,7 @@ export default function Dashboard({ onNavigate, onSelectIncident }) {
         <div className="relative z-10 max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
             <BrainCircuit className="w-3.5 h-3.5 text-brand-400" />
-            <span>HackWithHyderabad 3.0 • AI Agents That Learn Using Hindsight</span>
+            <span>AI Agents That Learn Using Hindsight</span>
           </div>
 
           <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-tight">

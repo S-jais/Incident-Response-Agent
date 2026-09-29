@@ -1,5 +1,5 @@
 # HindsightOps: 60–90 Second Demo Script
-### HackWithHyderabad 3.0 Presentation
+### SRE & Leadership Presentation
 
 ---
 

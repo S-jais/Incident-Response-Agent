@@ -85,7 +85,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="HindsightOps AI Incident Response Agent API",
-    description="An AI incident responder that remembers what happened before. Built for HackWithHyderabad 3.0.",
+    description="An AI incident responder that remembers what happened before.",
     version="1.0.0",
     lifespan=lifespan
 )

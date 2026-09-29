@@ -1,6 +1,6 @@
 """
 SYNTHETIC DEMO INCIDENT DATASET FOR HINDSIGHTOPS
-Note: All incidents, hostnames, and timestamps below are synthetic demo data created for HackWithHyderabad 3.0.
+Note: All incidents, hostnames, and timestamps below are synthetic demo data created for HindsightOps.
 """
 
 from typing import List, Dict, Any

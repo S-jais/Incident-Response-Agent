@@ -63,9 +63,6 @@ export default function Navbar({ activeTab, setActiveTab, onDemoReset }) {
                 <span className="text-xl font-bold tracking-tight text-white font-mono">
                   Hindsight<span className="text-brand-400">Ops</span>
                 </span>
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-400 border border-brand-500/30">
-                  HackWithHyd 3.0
-                </span>
               </div>
               <p className="text-[11px] text-slate-400 tracking-tight hidden sm:block">
                 An AI incident responder that remembers what happened before

@@ -1,5 +1,5 @@
-# Hackathon Judge Walkthrough Guide
-### HackWithHyderabad 3.0: "AI Agents That Learn Using Hindsight"
+# Evaluation & Walkthrough Guide
+### Theme: "AI Agents That Learn Using Hindsight"
 
 Welcome, Judges! This guide provides a rapid reference for evaluating **HindsightOps** against the hackathon's core judging criteria.
 

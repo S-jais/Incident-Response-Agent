@@ -97,7 +97,7 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-slate-800 bg-slate-900/60 py-6 text-center text-xs text-slate-500 font-mono">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>HindsightOps • Built for HackWithHyderabad 3.0</span>
+          <span>HindsightOps • AI Incident Responder That Remembers</span>
           <span>Theme: "AI Agents That Learn Using Hindsight"</span>
           <span className="text-slate-400">Persistent Institutional Memory for SREs</span>
         </div>

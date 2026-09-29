@@ -1,7 +1,7 @@
 # HindsightOps ⚡
 ### AI Incident Response Agent That Remembers What Happened Before
 
-[![Hackathon](https://img.shields.io/badge/HackWithHyderabad_3.0-Theme:_AI_Agents_That_Learn_Using_Hindsight-818cf8)](https://hackwithhyderabad.com)
+[![Theme](https://img.shields.io/badge/Theme-AI_Agents_That_Learn_Using_Hindsight-818cf8)](#)
 [![Memory](https://img.shields.io/badge/Memory-Hindsight_Cloud-06b6d4)](https://hindsight.vectorize.io/)
 [![Frontend](https://img.shields.io/badge/Frontend-React_19_+_Vite_+_Tailwind-6366f1)](https://vite.dev)
 [![Backend](https://img.shields.io/badge/Backend-FastAPI_+_Python_3.11-10b981)](https://fastapi.tiangolo.com)

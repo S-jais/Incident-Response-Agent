@@ -1,6 +1,6 @@
 # HindsightOps Demo Guide
 
-This guide walks through the primary demo scenario created for **HackWithHyderabad 3.0**.
+This guide walks through the primary demo scenario created for **HindsightOps: AI Agents That Learn Using Hindsight**.
 
 ---
 
