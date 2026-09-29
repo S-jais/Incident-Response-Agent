@@ -27,11 +27,11 @@ pre,code{font-family:var(--mo)}
 
 /* ── APP SHELL LAYOUT ── */
 .app-shell{display:flex;height:100vh;flex-direction:column;overflow:hidden}
-.topbar{position:sticky;top:0;z-index:60;background:var(--bg);border-bottom:1px solid var(--ln);height:52px;display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0}
+.topbar{position:sticky;top:0;z-index:60;background:var(--bg);border-bottom:1px solid var(--ln);height:52px;display:flex;align-items:center;padding:0 18px;gap:12px;flex-shrink:0}
 .body-row{display:flex;flex:1;min-height:0;overflow:hidden;position:relative}
 
 /* ── SIDEBAR ── */
-.sidebar{width:230px;flex-shrink:0;border-right:1px solid var(--ln);background:var(--pn);display:flex;flex-direction:column;height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--ln) transparent;z-index:40;transition:transform .2s ease}
+.sidebar{width:230px;flex-shrink:0;border-right:1px solid var(--ln);background:var(--pn);display:flex;flex-direction:column;height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--ln) transparent;z-index:40;transition:transform .25s ease, width .25s ease, opacity .2s ease}
 .sidebar::-webkit-scrollbar{width:4px}
 .sidebar::-webkit-scrollbar-thumb{background:var(--ln)}
 .sb-section{padding:12px 0;border-bottom:1px solid var(--ln)}
@@ -46,23 +46,31 @@ pre,code{font-family:var(--mo)}
 .sb-stat-row .k{color:var(--mu)}.sb-stat-row .v{font:700 12px var(--mo)}
 .sb-footer{margin-top:auto;padding:14px 16px;border-top:1px solid var(--ln)}
 
+/* Hidden state: When opening webpage (Home view), sidebar is not visible until Dashboard is touched */
+.app-shell.sidebar-hidden .sidebar{
+  display:none !important;
+  width:0 !important;
+  border-right:none !important;
+}
+
 /* ── MAIN CONTENT ── */
-.content{flex:1;height:100%;overflow-y:auto;overflow-x:hidden;min-width:0;display:flex;flex-direction:column}
-main{padding:28px 28px 80px;max-width:1160px;flex:1}
+.content{flex:1;height:100%;overflow-y:auto;overflow-x:hidden;min-width:0;display:flex;flex-direction:column;scroll-behavior:smooth}
+main{padding:28px 28px 80px;max-width:1160px;width:100%;margin:0 auto;flex:1;transition:max-width .3s ease, padding .3s ease}
+.app-shell.sidebar-hidden main{max-width:1440px;width:100%;padding:32px 48px 100px;margin:0 auto}
 footer{border-top:1px solid var(--ln);padding:16px 28px;font:11px var(--mo);color:var(--mu);flex-shrink:0}
 
-/* ── TOPBAR INTERNALS ── */
+/* ── TOPBAR INTERNALS: EQUALLY DISTRIBUTED NAV ── */
 .brand{display:flex;gap:10px;align-items:center;cursor:pointer;flex:none;text-decoration:none;color:inherit}
 .brand-icon{width:34px;height:34px;background:var(--ac);color:#101400;display:grid;place-items:center;font:800 18px var(--sn);clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%);flex-shrink:0}
 .brand-text b{font-weight:800;font-size:15px;letter-spacing:-.03em;line-height:1;display:block}
 .brand-text small{font:9px var(--mo);color:var(--mu)}
 .hackbadge{font:500 9px var(--mo);background:color-mix(in srgb,var(--ac) 20%,transparent);color:var(--ac);border:1px solid var(--ac);padding:1px 5px;margin-left:5px;vertical-align:middle}
 .divider{width:1px;height:24px;background:var(--ln);flex-shrink:0}
-nav.topnav{display:flex;gap:1px}
-nav.topnav button{background:none;border:0;border-bottom:2px solid transparent;padding:6px 12px;color:var(--mu);cursor:pointer;white-space:nowrap;font-size:13px;font-weight:500;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:5px;height:52px}
-nav.topnav button:hover{color:var(--tx)}
-nav.topnav button.on{color:var(--tx);border-bottom-color:var(--ac)}
-.topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+nav.topnav{display:flex;flex:1;max-width:780px;justify-content:space-evenly;align-items:center;margin:0 12px}
+nav.topnav button{background:none;border:0;border-bottom:2px solid transparent;padding:0 14px;color:var(--mu);cursor:pointer;white-space:nowrap;font-size:13px;font-weight:600;transition:color .15s,border-color .15s,background .15s;display:flex;align-items:center;gap:6px;height:52px}
+nav.topnav button:hover{color:var(--tx);background:color-mix(in srgb,var(--tx) 4%,transparent)}
+nav.topnav button.on{color:var(--tx);border-bottom-color:var(--ac);background:color-mix(in srgb,var(--ac) 6%,transparent)}
+.topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-shrink:0}
 .jd{font:600 9px var(--mo);background:var(--ac2);color:#fff;padding:2px 5px;border-radius:2px;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
 .pill{font:11px var(--mo);border:1px solid var(--ln);padding:4px 9px;background:var(--pn);display:flex;gap:6px;align-items:center;white-space:nowrap}
@@ -84,7 +92,9 @@ nav.topnav button.on{color:var(--tx);border-bottom-color:var(--ac)}
 .btn-icon:hover{background:color-mix(in srgb,var(--tx) 8%,transparent)}
 @keyframes ping{75%,100%{transform:scale(2);opacity:0}}
 
-/* ── SECTIONS ── */
+/* ── CONTINUOUS SCROLL: SLIDE DOWN VISITS EVERY LINK ── */
+.continuous-scroll .v{display:block !important;margin-bottom:56px;padding-bottom:36px;border-bottom:1px solid var(--ln);scroll-margin-top:68px}
+.continuous-scroll .v:last-of-type{border-bottom:none;margin-bottom:20px}
 .v{display:none}.v.on{display:block;animation:fadein .25s}
 @keyframes fadein{from{opacity:0;transform:translateY(6px)}}
 
@@ -237,7 +247,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
 </style>
 </head>
 <body>
-<div class="app-shell">
+<div class="app-shell sidebar-hidden continuous-scroll">
 
 <!-- ====== TOPBAR ====== -->
 <header class="topbar">
@@ -250,11 +260,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
     </div>
   </a>
   <div class="divider"></div>
-  <!-- Primary nav: 3 most important links only -->
+  <!-- Primary nav: 5 equally distributed links -->
   <nav class="topnav" id="topnav"></nav>
   <div class="topbar-right">
+    <button class="btn xs ghost" id="sidebarDockBtn" onclick="toggleSidebarDock()" title="Toggle Sidebar Visibility">◧ Sidebar</button>
     <div class="pill" id="healthPill"><span class="ping"><i></i></span><span id="healthLabel">Connecting...</span></div>
-    <button class="btn xs ghost" id="resetBtn" onclick="resetDemo()">↺ Reset Demo</button>
+    <button class="btn xs ghost" id="resetBtn" onclick="resetDemo()">↺ Reset</button>
     <button class="btn-icon" title="Toggle theme" onclick="toggleTheme()">◑</button>
   </div>
 </header>
@@ -270,7 +281,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
   <div class="sb-section">
     <span class="sb-label">Investigate</span>
     <button class="sb-link" data-sidebar="demo" onclick="go('demo')">
-      <span class="sb-icon">▶</span>Memory Learning Demo
+      <span class="sb-icon">▶</span>Memory Learning
       <span class="sb-badge">JUDGES</span>
     </button>
     <button class="sb-link" data-sidebar="incident-detail" onclick="openINC()">
@@ -344,7 +355,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
     <h1 class="hero-title">Turn every production incident into <em>institutional memory.</em></h1>
     <p class="hero-sub">When production fails, engineers shouldn't have to re-solve identical problems from scratch. HindsightOps recalls previous root causes, verified runbooks, and postmortems from persistent Hindsight memory.</p>
     <div class="hero-ctas">
-      <button class="btn p" onclick="go('demo')">▶ Launch 60s Judge Demo</button>
+      <button class="btn p" onclick="go('demo')">▶ Launch 60s Memory Learning</button>
       <button class="btn ghost" onclick="openINC('INC-1042')">Investigate Target INC-1042 →</button>
       <button class="btn ghost" onclick="go('ba')">Stateless vs Hindsight Comparison</button>
     </div>
@@ -689,16 +700,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
 </section>
 
 <!-- ========================================
-     SECTION: MEMORY LEARNING DEMO
+     SECTION: MEMORY LEARNING
 ======================================== -->
 <section class="v" id="demo">
   <div class="row" style="justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
     <div>
       <div class="badge" style="margin-bottom:10px">✦ Interactive 60-Second Judge Walkthrough</div>
-      <h2 style="font-size:20px;font-weight:800">Memory Learning Lifecycle Demo</h2>
+      <h2 style="font-size:20px;font-weight:800">Memory Learning Lifecycle</h2>
       <p style="color:var(--mu);font-size:13px;margin-top:4px">Watch the AI agent evolve from a generic chatbot into an experienced SRE that gets smarter with every incident.</p>
     </div>
-    <button class="btn xs ghost" id="demoResetBtn" onclick="resetDemoStep()">↺ Reset Demo</button>
+    <button class="btn xs ghost" id="demoResetBtn" onclick="resetDemoStep()">↺ Reset</button>
   </div>
 
   <!-- Stepper -->
@@ -1006,11 +1017,13 @@ const S = {
 window.S = S;
 
 // ─── NAV ────────────────────────────────────────────────
-// Primary tabs shown in topbar (3 max)
+// Primary tabs shown in topbar (5 equally distributed links)
 const TOP_TABS = [
   {id:'dash', label:'Dashboard'},
   {id:'incidents', label:'Incidents'},
-  {id:'new-incident', label:'New Incident'},
+  {id:'demo', label:'Memory Learning'},
+  {id:'ba', label:'Before vs After'},
+  {id:'new-incident', label:'+ New Incident'},
 ];
 // Secondary tabs live in the sidebar (rendered in HTML)
 const SIDEBAR_TABS = ['demo','ba','memory','runbooks','settings','incident-detail'];
@@ -1018,6 +1031,26 @@ const SIDEBAR_TABS = ['demo','ba','memory','runbooks','settings','incident-detai
 document.getElementById('topnav').innerHTML = TOP_TABS.map(t=>
   `<button onclick="go('${t.id}')" data-tab="${t.id}">${t.label}</button>`
 ).join('');
+
+// ─── SIDEBAR DOCK & SPREAD STATE ───
+function setSidebarDocked(docked) {
+  S.sidebarDocked = docked;
+  const shell = document.querySelector('.app-shell');
+  const btn = document.getElementById('sidebarDockBtn');
+  if (shell) {
+    shell.classList.toggle('sidebar-hidden', !docked);
+  }
+  if (btn) {
+    btn.innerHTML = docked ? '◨ Hide Sidebar' : '◧ Sidebar';
+    btn.title = docked ? 'Hide left sidebar (Spread full UI)' : 'Show left sidebar (Docked UI)';
+  }
+}
+window.setSidebarDocked = setSidebarDocked;
+
+function toggleSidebarDock() {
+  setSidebarDocked(!S.sidebarDocked);
+}
+window.toggleSidebarDock = toggleSidebarDock;
 
 function toggleSidebar() {
   const sb = document.querySelector('.sidebar');
@@ -1027,21 +1060,39 @@ function toggleSidebar() {
 }
 window.toggleSidebar = toggleSidebar;
 
+function updateNavHighlight(id) {
+  document.querySelectorAll('#topnav button').forEach(b => {
+    b.classList.toggle('on', b.dataset.tab === id);
+  });
+  document.querySelectorAll('.sb-link[data-sidebar]').forEach(b => {
+    b.classList.toggle('on', b.dataset.sidebar === id);
+  });
+}
+window.updateNavHighlight = updateNavHighlight;
+
 function go(id) {
+  // When user touches Dashboard, return sidebar to visible state and dock original size
+  if (id === 'dash' && !S.sidebarDocked) {
+    setSidebarDocked(true);
+  }
+
   S.activeTab = id;
-  document.querySelectorAll('.v').forEach(e=>e.classList.toggle('on', e.id===id));
-  // Highlight topnav buttons
-  document.querySelectorAll('#topnav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===id));
-  // Highlight sidebar links
-  document.querySelectorAll('.sb-link[data-sidebar]').forEach(b=>b.classList.toggle('on', b.dataset.sidebar===id));
+  updateNavHighlight(id);
+
   // Close mobile drawer if open
   const sb = document.querySelector('.sidebar');
   const bd = document.getElementById('sbBackdrop');
   if(sb) sb.classList.remove('mobile-open');
   if(bd) bd.classList.remove('mobile-open');
-  // Scroll content area to top
-  const cont = document.querySelector('.content');
-  if(cont) cont.scrollTo(0,0);
+
+  // Smooth scroll to section in continuous scroll mode
+  const target = document.getElementById(id);
+  if(target) {
+    S.isNavigating = true;
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => { S.isNavigating = false; }, 650);
+  }
+
   // Lazy load section data
   if(id==='incidents') loadIncidentsList();
   if(id==='memory') loadMemory();
@@ -1051,6 +1102,39 @@ function go(id) {
   if(id==='ba') renderCompMatrix();
 }
 window.go = go;
+
+// ─── SCROLLSPY: SLIDE DOWN VISITS EVERY LINK AUTOMATICALLY ───
+function initScrollspy() {
+  const cont = document.querySelector('.content');
+  if (!cont) return;
+
+  let ticking = false;
+  cont.addEventListener('scroll', () => {
+    if (S.isNavigating) return;
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        const sections = Array.from(document.querySelectorAll('main > section.v'));
+        const contRect = cont.getBoundingClientRect();
+        const triggerY = contRect.top + 160;
+
+        let activeId = null;
+        for (const sec of sections) {
+          const rect = sec.getBoundingClientRect();
+          if (rect.top <= triggerY && rect.bottom > triggerY) {
+            activeId = sec.id;
+            break;
+          }
+        }
+        if (activeId && activeId !== S.activeTab) {
+          S.activeTab = activeId;
+          updateNavHighlight(activeId);
+        }
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+}
 
 function openINC(id) {
   const targetId = id || S.selectedIncId || 'INC-1042';
@@ -1868,17 +1952,26 @@ function toggleTheme() {
 window.toggleTheme = toggleTheme;
 
 // ─── INIT ────────────────────────────────────────────────
-function init() {
+async function init() {
   checkHealth();
   loadDashboard();
+  loadIncidentsList();
+  loadMemory();
+  loadRunbooks();
+  loadSettings();
   renderDemoStep();
   renderCompMatrix();
-  // Handle URL hash for direct deep-links or default to dash
+  initScrollspy();
+
+  // On initial open: left sidebar is not visible until Dashboard is touched
+  setSidebarDocked(false);
+
+  // Handle URL hash for direct deep-links or default highlight
   const hash = location.hash.replace('#','');
   if(hash && document.getElementById(hash)) {
     go(hash);
   } else {
-    go('dash');
+    updateNavHighlight('dash');
   }
 }
 
