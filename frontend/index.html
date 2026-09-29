@@ -229,19 +229,91 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
 .confidence-bar{height:3px;background:var(--ln);margin-top:4px;border-radius:0}
 .confidence-fill{height:100%;background:var(--ac);transition:width .5s}
 
-/* ── RESPONSIVE ── */
+/* ── RESPONSIVE & MOBILE TUNING ── */
 .sb-toggle-btn{display:none}
 .sb-backdrop{display:none}
-@media(max-width:1100px){.inc-detail-grid{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}.loop{grid-template-columns:1fr}.node{margin:-1px 0 0}}
+.table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.table-wrap table{min-width:680px}
+#dashTable{min-width:520px}
+
+@media(max-width:1100px){
+  .inc-detail-grid{grid-template-columns:1fr}
+  .g4{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr}
+  .loop{grid-template-columns:1fr}
+  .node{margin:-1px 0 0}
+}
+
 @media(max-width:860px){
   .sb-toggle-btn{display:flex!important}
-  .sidebar{position:fixed;top:52px;left:0;bottom:0;z-index:90;transform:translateX(-100%);box-shadow:6px 0 24px rgba(0,0,0,.6)}
-  .sidebar.mobile-open{transform:translateX(0)}
-  .sb-backdrop{display:none;position:fixed;inset:52px 0 0 0;background:rgba(0,0,0,.5);z-index:85}
+  /* Ensure sidebar drawer works on mobile even when app-shell has sidebar-hidden */
+  .app-shell.sidebar-hidden .sidebar{
+    display:flex !important;
+    width:280px !important;
+    transform:translateX(-100%) !important;
+    border-right:1px solid var(--ln) !important;
+  }
+  .sidebar{
+    position:fixed;
+    top:52px;
+    left:0;
+    bottom:0;
+    z-index:90;
+    width:280px;
+    transform:translateX(-100%);
+    box-shadow:6px 0 24px rgba(0,0,0,.6);
+    transition:transform .25s ease-out;
+  }
+  .sidebar.mobile-open,
+  .app-shell.sidebar-hidden .sidebar.mobile-open{
+    transform:translateX(0) !important;
+  }
+  .sb-backdrop{
+    display:none;
+    position:fixed;
+    inset:52px 0 0 0;
+    background:rgba(0,0,0,.5);
+    z-index:85;
+    backdrop-filter:blur(2px);
+  }
   .sb-backdrop.mobile-open{display:block}
+
+  /* On mobile/tablet, hide topbar text nav and dock toggle; hamburger drawer hosts all links */
+  nav.topnav{display:none !important}
+  .topbar .divider{display:none !important}
+  #sidebarDockBtn{display:none !important}
+
   .content{overflow-x:hidden}
+  main, .app-shell.sidebar-hidden main{
+    padding:20px 14px 80px;
+    max-width:100%;
+  }
 }
-@media(max-width:600px){.g4,.g2,.g3,.g12{grid-template-columns:1fr}.hero{padding:24px}main{padding:18px 14px 60px}}
+
+@media(max-width:700px){
+  .comp-matrix-row{grid-template-columns:1fr !important;gap:8px !important}
+}
+
+@media(max-width:600px){
+  .g4,.g2,.g3,.g12{grid-template-columns:1fr}
+  .hero{padding:24px 16px}
+  .hero-title{font-size:clamp(1.75rem,7vw,2.4rem)}
+  .hero-ctas{flex-direction:column}
+  .hero-ctas .btn{width:100%;text-align:center;justify-content:center}
+  #healthLabel{display:none}
+  #healthPill{padding:4px 7px}
+  .demo-footer{flex-direction:column;align-items:stretch;gap:10px}
+  .demo-footer .row{width:100%;justify-content:space-between}
+  .demo-footer button{width:100%;justify-content:center}
+  .inc-hdr-actions{width:100%;display:flex;flex-direction:column;gap:8px}
+  .inc-hdr-actions .btn{width:100%;justify-content:center}
+  .panel{padding:18px 14px}
+  .stat b{font-size:30px}
+  .modal-bg{padding:8px}
+  .modal{max-height:92vh}
+  .modal-hdr{padding:14px 16px}
+  .modal-body{padding:14px}
+}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -271,6 +343,20 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
 
 <!-- ====== LEFT SIDEBAR ====== -->
 <aside class="sidebar">
+
+  <!-- Overview section -->
+  <div class="sb-section">
+    <span class="sb-label">Overview</span>
+    <button class="sb-link" data-sidebar="dash" onclick="go('dash')">
+      <span class="sb-icon">📊</span>Dashboard
+    </button>
+    <button class="sb-link" data-sidebar="incidents" onclick="go('incidents')">
+      <span class="sb-icon">🚨</span>Incidents
+    </button>
+    <button class="sb-link" data-sidebar="new-incident" onclick="go('new-incident')">
+      <span class="sb-icon">➕</span>New Incident
+    </button>
+  </div>
 
   <!-- Investigate section -->
   <div class="sb-section">
@@ -398,10 +484,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
         </div>
         <button class="btn xs ghost" onclick="go('incidents')">View All →</button>
       </div>
-      <table id="dashTable">
-        <thead><tr><th>ID</th><th>Service</th><th>Title</th><th>Status</th><th>Memory</th></tr></thead>
-        <tbody id="dashTbody"><tr><td colspan="5" class="loading-text">Loading from backend...</td></tr></tbody>
-      </table>
+      <div class="table-wrap">
+        <table id="dashTable">
+          <thead><tr><th>ID</th><th>Service</th><th>Title</th><th>Status</th><th>Memory</th></tr></thead>
+          <tbody id="dashTbody"><tr><td colspan="5" class="loading-text">Loading from backend...</td></tr></tbody>
+        </table>
+      </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:14px">
       <div class="panel" style="margin:0">
@@ -466,10 +554,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
   </div>
 
   <div class="panel" style="margin:0;padding:0;overflow:hidden">
-    <table>
-      <thead><tr><th>ID</th><th>Service</th><th>Severity</th><th>Title & Error</th><th>Status</th><th>Runbook</th><th>Memory</th><th style="text-align:right">Action</th></tr></thead>
-      <tbody id="incTbody"><tr><td colspan="8" class="loading-text">Loading incidents...</td></tr></tbody>
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Service</th><th>Severity</th><th>Title & Error</th><th>Status</th><th>Runbook</th><th>Memory</th><th style="text-align:right">Action</th></tr></thead>
+        <tbody id="incTbody"><tr><td colspan="8" class="loading-text">Loading incidents...</td></tr></tbody>
+      </table>
+    </div>
   </div>
 </section>
 
@@ -493,7 +583,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
         <h2 id="detTitle" style="font-size:17px;font-weight:800"></h2>
         <div id="detMeta" class="mo" style="font-size:11px;color:var(--mu);margin-top:6px"></div>
       </div>
-      <div class="row" style="gap:8px">
+      <div class="row inc-hdr-actions" style="gap:8px">
         <button class="btn xs ghost" id="detStatelessBtn" onclick="runAnalysis(true)">Stateless Mode</button>
         <button class="btn p sm" id="detAnalyzeBtn" onclick="runAnalysis(false)">✦ Investigate with Hindsight</button>
         <button class="btn em sm" id="detResolveBtn" onclick="showResolutionForm()" style="display:none">✓ Resolve Incident</button>
@@ -1759,7 +1849,7 @@ function renderCompMatrix() {
     {feature:'Future Institutional Learning',stateless:'Stateless: forgotten immediately after conversation session ends',hindsight:'Persistent: resolution & postmortem retained in Hindsight for future incidents'},
   ];
   document.getElementById('compMatrix').innerHTML = items.map(c=>`
-    <div style="padding:14px 20px;border-bottom:1px solid var(--ln);display:grid;grid-template-columns:1fr 1.4fr 1.4fr;gap:12px;font-size:13px">
+    <div class="comp-matrix-row" style="padding:14px 20px;border-bottom:1px solid var(--ln);display:grid;grid-template-columns:1fr 1.4fr 1.4fr;gap:12px;font-size:13px">
       <div style="font-weight:600">${c.feature}</div>
       <div><span style="font:10px var(--mo);text-transform:uppercase;color:var(--rose);display:block;margin-bottom:3px">Stateless AI:</span><span style="color:var(--mu)">${c.stateless}</span></div>
       <div><span style="font:10px var(--mo);text-transform:uppercase;color:var(--em);display:block;margin-bottom:3px">HindsightOps:</span><span style="font-weight:500">${c.hindsight}</span></div>
